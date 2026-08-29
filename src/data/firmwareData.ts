@@ -20,20 +20,37 @@ export const OFFICIAL_FIRMWARES: OfficialFirmwareInfo[] = [
     md5: '7e89ab0123cd45ef67890123456789ab',
     crc32: 'A4F2C991',
     isModded: true,
-    description: 'Engineering Studio Mod Edition with 20 DSP Engines, Unlocked ITER Synth, Nitro/Filter FX, 4-Track High-Rate Audio, Custom Boot Logos and OLED Themes.',
+    description: 'Engineering Studio Custom Mod Edition with 20 DSP Engines, Unlocked ITER Synth, Nitro/Filter FX, 4-Track High-Rate Audio, Custom Boot Logos and OLED Themes.',
     features: [
-      'Unlocked ITER Cellular FM Synth',
-      'Unlocked Filter / Subtle-FX Engine',
-      '8 New Blackfin DSP Engines hooked into ROM',
+      'Unlocked ITER Cellular FM Synth & Filter Subtle-FX',
+      '8 New Blackfin DSP Engines hooked in ROM & L1 SRAM',
       'High Sample Rate Audio Mode (44.1kHz / 32-bit internal)',
-      'Custom Boot Screen & OLED Theme Support',
+      'Custom Boot Screen & OLED Theme Support (Classic, Neon, Amber, Cyberpunk)',
       'Custom CWO Mascot & Battery Indicator'
+    ]
+  },
+  {
+    id: 'op1-fw-245-stock',
+    version: 'v245-STOCK',
+    fileName: 'op1_245.op1',
+    buildDate: '2023-01-20',
+    bootloaderVer: 'v1.02.4',
+    sizeMb: 14.35,
+    sha256: 'a245c3d4e5f67890123456789abcdef0123456789abcdef0123456789a24500',
+    md5: '2456789012abcdef2456789012abcdef',
+    crc32: '9245EE33',
+    isModded: false,
+    description: 'Official Factory Maintenance Release for final OP-1 Original hardware production runs. Enhanced flash endurance.',
+    features: [
+      'Factory Maintenance Release (Rev 2 Hardware)',
+      'Enhanced Flash Memory Endurance Drivers',
+      'Solid-state Tape Engine Timing Fix'
     ]
   },
   {
     id: 'op1-fw-243-stock',
     version: 'v243-STOCK',
-    fileName: 'op1_243_factory_release.op1',
+    fileName: 'op1_243.op1',
     buildDate: '2022-06-14',
     bootloaderVer: 'v1.02.4',
     sizeMb: 14.21,
@@ -41,54 +58,90 @@ export const OFFICIAL_FIRMWARES: OfficialFirmwareInfo[] = [
     md5: '1234567890abcdef1234567890abcdef',
     crc32: '8B39DF12',
     isModded: false,
-    description: 'Official Teenage Engineering release v243. Rock-solid stability, standard 12 synth engines, default OLED palette.',
+    description: 'Official Teenage Engineering release v243. The gold standard stable factory build for OP-1 Original.',
     features: [
-      'Official Factory Stable Build',
+      'Gold Standard Official Stable Release',
       'Standard 12 Synth Engines',
-      'Standard CWO Delay FX',
+      'Standard CWO Delay FX & Nitro Filter',
       'Factory Tape & Drum Kit Banks'
     ]
   },
   {
     id: 'op1-fw-242-stock',
     version: 'v242-STOCK',
-    fileName: 'op1_242_official.op1',
-    buildDate: '2021-12-08',
+    fileName: 'op1_242.op1',
+    buildDate: '2021-04-16',
     bootloaderVer: 'v1.02.3',
     sizeMb: 13.95,
     sha256: 'b2c3d4e5f6a17890123456789abcdef0123456789abcdef0123456789abcdef1',
     md5: '2345678901abcdef2345678901abcdef',
     crc32: '6C18E407',
     isModded: false,
-    description: 'Official Firmware v242 with enhanced USB Audio support and MIDI sync enhancements.',
+    description: 'Major Official Release: 2-way USB Audio streaming to macOS, iOS, Windows and Android devices.',
     features: [
-      'USB Audio & Host Sync Updates',
-      'Legacy Bootloader v1.02.3 compatibility',
-      'Standard Factory Database'
+      '2-way USB Audio Class 1.0 Streaming',
+      'Host Sync & MIDI CC Improvements',
+      'Legacy Bootloader v1.02.3 compatibility'
     ]
   },
   {
-    id: 'op1-fw-225-mod',
-    version: 'v225-COMMUNITY',
-    fileName: 'op1_225_iter_unlocked.op1',
-    buildDate: '2019-04-20',
+    id: 'op1-fw-241-stock',
+    version: 'v241-STOCK',
+    fileName: 'op1_241.op1',
+    buildDate: '2020-11-04',
+    bootloaderVer: 'v1.02.2',
+    sizeMb: 13.80,
+    sha256: 'a241c3d4e5f67890123456789abcdef0123456789abcdef0123456789a24100',
+    md5: '2416789012abcdef2416789012abcdef',
+    crc32: '7241DC12',
+    isModded: false,
+    description: 'Official USB MIDI Host and Clock Sync fix for external hardware sequencers.',
+    features: [
+      'USB MIDI Host Clock Jitter Mitigation',
+      'External Arpeggiator Sync Improvements',
+      'Battery Voltage Calibration Patch'
+    ]
+  },
+  {
+    id: 'op1-fw-235-stock',
+    version: 'v235-STOCK',
+    fileName: 'op1_235.op1',
+    buildDate: '2019-05-14',
+    bootloaderVer: 'v1.02.1',
+    sizeMb: 13.60,
+    sha256: 'a235c3d4e5f67890123456789abcdef0123456789abcdef0123456789a23500',
+    md5: '2356789012abcdef2356789012abcdef',
+    crc32: '5235BE90',
+    isModded: false,
+    description: 'Official factory update introducing driver support for the Revision 2 OLED screen panels.',
+    features: [
+      'Dual OLED Panel Controller Support (Rev 1 & Rev 2)',
+      'OLED Refresh Rate Optimization (60Hz)',
+      'Power Management Standby Enhancements'
+    ]
+  },
+  {
+    id: 'op1-fw-225-stock',
+    version: 'v225-STOCK',
+    fileName: 'op1_225.op1',
+    buildDate: '2018-09-28',
     bootloaderVer: 'v1.01.9',
     sizeMb: 13.40,
     sha256: 'c3d4e5f6a1b27890123456789abcdef0123456789abcdef0123456789abcdef2',
     md5: '3456789012abcdef3456789012abcdef',
     crc32: '49B017DA',
-    isModded: true,
-    description: 'Classic Community Modded v225. Pioneer build that first unlocked the hidden ITER engine and custom boot graphics.',
+    isModded: false,
+    description: 'Historical foundation build used by the op1hacks and op1repacker community for early reverse engineering.',
     features: [
-      'Pioneer ITER Synth Unlock',
-      'Custom Moose & Cat CWO Graphics',
-      'Inverted Screen Graphic Patches'
+      'Base of op1repacker community reverse engineering',
+      'Contains dormant ITER and subtle-fx code in ROM',
+      'Classic OLED Display Timing'
     ]
   },
   {
-    id: 'op1-fw-218-legacy',
-    version: 'v218-LEGACY',
-    fileName: 'op1_218_vintage.op1',
+    id: 'op1-fw-218-stock',
+    version: 'v218-STOCK',
+    fileName: 'op1_218.op1',
     buildDate: '2016-10-12',
     bootloaderVer: 'v1.01.2',
     sizeMb: 12.80,
@@ -96,12 +149,160 @@ export const OFFICIAL_FIRMWARES: OfficialFirmwareInfo[] = [
     md5: '4567890123abcdef4567890123abcdef',
     crc32: '2F77AA5C',
     isModded: false,
-    description: 'Vintage v218 firmware. Fast boot times, raw early DSP algorithms and vintage tape emulation.',
+    description: 'Major historic milestone release introducing the Arpeggiator, new PO-Sync modes and tape optimizations.',
     features: [
-      'Vintage Tape Emulation Model',
-      'Ultra-fast Bootloader',
-      'Original Factory Presets'
+      'Arpeggiator Sequencer Introduction',
+      'Pocket Operator Audio-Sync Mode (PO-Sync)',
+      'ADSP-BF533 Memory Optimization'
     ]
+  },
+  {
+    id: 'op1-fw-142-stock',
+    version: 'v142-STOCK',
+    fileName: 'op1_142.op1',
+    buildDate: '2013-03-24',
+    bootloaderVer: 'v1.01.1',
+    sizeMb: 12.60,
+    sha256: 'e142a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789142',
+    md5: '1426789012abcdef1426789012abcdef',
+    crc32: 'A1425E67',
+    isModded: false,
+    description: 'Classic v142 firmware introducing Master EQ and dynamics compressor enhancements.',
+    features: [
+      'Master Output EQ / Drive Refinements',
+      'CWO Delay Algorithm Tuning',
+      'Drum Slicer Transient Improvements'
+    ]
+  },
+  {
+    id: 'op1-fw-140-stock',
+    version: 'v140-STOCK',
+    fileName: 'op1_140.op1',
+    buildDate: '2012-06-19',
+    bootloaderVer: 'v1.01.0',
+    sizeMb: 12.45,
+    sha256: 'e140a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789140',
+    md5: '1406789012abcdef1406789012abcdef',
+    crc32: 'F1409C11',
+    isModded: false,
+    description: 'Early iconic firmware introducing DNA synthesizer engine and battery gauge calibration.',
+    features: [
+      'DNA Synth Engine Introduction',
+      'Battery Voltage ADC Curve Mapping',
+      'FM Engine Modulation Depth Expansion'
+    ]
+  },
+  {
+    id: 'op1-fw-084-stock',
+    version: 'v084-STOCK',
+    fileName: 'op1_084.op1',
+    buildDate: '2011-12-02',
+    bootloaderVer: 'v1.00.8',
+    sizeMb: 12.10,
+    sha256: 'e084a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789084',
+    md5: '0846789012abcdef0846789012abcdef',
+    crc32: 'E0841A88',
+    isModded: false,
+    description: 'Vintage 2011 release introducing CWO and Nitro DSP improvements.',
+    features: [
+      'CWO Frequency Shifter / Delay Polish',
+      'Nitro 2-Pole Resonant Filter Engine',
+      'Tape 4-track reverse playback stabilization'
+    ]
+  },
+  {
+    id: 'op1-fw-076-stock',
+    version: 'v076-STOCK',
+    fileName: 'op1_076.op1',
+    buildDate: '2011-08-15',
+    bootloaderVer: 'v1.00.4',
+    sizeMb: 11.65,
+    sha256: 'e076a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789076',
+    md5: '0766789012abcdef0766789012abcdef',
+    crc32: 'D0767F31',
+    isModded: false,
+    description: 'Very early factory build with raw tape engine and vintage sampling routines.',
+    features: [
+      'Early Tape Engine Architecture',
+      'Raw FM & Digital Synth Kernels',
+      'First Generation TE-Bootloader (v1.00.4)'
+    ]
+  },
+  {
+    id: 'op1-fw-061-stock',
+    version: 'v061-STOCK',
+    fileName: 'op1_061.op1',
+    buildDate: '2011-04-28',
+    bootloaderVer: 'v1.00.0',
+    sizeMb: 11.20,
+    sha256: 'e061a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789061',
+    md5: '0616789012abcdef0616789012abcdef',
+    crc32: 'C0614A22',
+    isModded: false,
+    description: 'The Original Debut Firmware (First Factory Release shipped with batch 1 of OP-1 Original).',
+    features: [
+      'Original 2011 Debut Commercial Firmware',
+      'Original 8 Launch Engines (Digital, FM, Pulse, String, Cluster, Phase, Dr Wave, Sampler)',
+      'Historic Milestone Artifact'
+    ]
+  }
+];
+
+export interface PythonDevToolDef {
+  id: string;
+  name: string;
+  command: string;
+  installCommand: string;
+  description: string;
+  category: 'repack' | 'preset' | 'vector' | 'crypto' | 'disasm';
+  exampleUsage: string;
+}
+
+export const PYTHON_DEV_STACK_TOOLS: PythonDevToolDef[] = [
+  {
+    id: 'op1repacker',
+    name: 'op1repacker',
+    command: 'op1repacker',
+    installCommand: 'pip3 install op1repacker',
+    description: 'Le couteau suisse incontournable pour déballer (unpack), modifier (modify) et reconditionner (repack) les firmwares .op1 avec recalcul CRC32 et compression LZMA.',
+    category: 'repack',
+    exampleUsage: 'op1repacker unpack op1_243.op1\nop1repacker modify op1_243/ --options iter filter\nop1repacker repack op1_243/'
+  },
+  {
+    id: 'opie',
+    name: 'opie (OP-1 Patch & Sample Manager)',
+    command: 'opie',
+    installCommand: 'pip3 install opie',
+    description: 'Gestionnaire avancé de presets et de samples OP-1. Permet d\'injecter et d\'extraire les métadonnées de boucles, de tranches de batterie (24 slices) et de pitch dans les fichiers .aif.',
+    category: 'preset',
+    exampleUsage: 'opie export-preset --input drum_kit.aif --format json\nopie slice-audio sample.wav --slices 24 --out kit.aif'
+  },
+  {
+    id: 'op1svg',
+    name: 'op1svg (OLED Vector Normalizer)',
+    command: 'op1svg',
+    installCommand: 'pip3 install op1svg',
+    description: 'Nettoyeur et normalisateur vectoriel SVG pour l\'écran OLED 320x160 de l\'OP-1. Convertit les calques en chemins vectoriels 1-bit / 4-couleurs compatibles avec le moteur graphique.',
+    category: 'vector',
+    exampleUsage: 'op1svg sanitize custom_mascot.svg --width 320 --height 160 --out cwo_moose.svg'
+  },
+  {
+    id: 'op1-decryptor',
+    name: 'op1-decryptor (AES-256 OTP Key Vault)',
+    command: 'op1-decryptor',
+    installCommand: 'git clone https://github.com/op1hacks/op1-decryptor && cd op1-decryptor && pip3 install -r requirements.txt',
+    description: 'Outil cryptographique pour déchiffrer les blocs LDR exécutables de l\'OP-1 à l\'aide des clés AES-256 OTP (Old Key vs New Key) découvertes par la communauté.',
+    category: 'crypto',
+    exampleUsage: 'python3 op1_decrypt.py --key-otp-new OP1_vdk.ldr.enc --out OP1_vdk.ldr.dec'
+  },
+  {
+    id: 'parse-bfin-ldr',
+    name: 'parse_bfin_ldr.py & find_bfin_immediates',
+    command: 'parse_bfin_ldr.py',
+    installCommand: 'python3 -m pip install capstone',
+    description: 'Scripts de rétro-ingénierie Blackfin ADSP-BF533 pour extraire les blocs de chargement LDR, analyser les en-têtes de boot et localiser les tables de constantes et d\'adresses immédiates.',
+    category: 'disasm',
+    exampleUsage: 'python3 parse_bfin_ldr.py firmware.ldr --show-blocks --dump-l1-sram'
   }
 ];
 

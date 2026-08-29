@@ -117,8 +117,8 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
       </header>
 
       {/* 4 Main Tabs Navigation Bar */}
-      <nav aria-label="Dashboard Panels" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Tab 1: Gestionnaire de Firmware */}
+      <nav aria-label="Dashboard Panels" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Tab 1: Fondations & Firmwares */}
         <button
           id="nav-tab-firmware-manager"
           onClick={() => handleTabChange('firmware-manager')}
@@ -132,13 +132,13 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
             <div className={`p-2 rounded-lg ${activeTab === 'firmware-manager' ? 'bg-cyan-500 text-black' : 'bg-zinc-800 text-zinc-300'}`}>
               <HardDrive className="w-4 h-4" />
             </div>
-            <span className="text-[10px] uppercase font-bold text-zinc-400">Étape 1</span>
+            <span className="text-[10px] uppercase font-bold text-cyan-400">Phase 1</span>
           </div>
           <h2 className={`text-sm font-bold ${activeTab === 'firmware-manager' ? 'text-cyan-300' : 'text-zinc-200'}`}>
-            Gestionnaire de Firmware
+            Fondations & Rack Logiciel
           </h2>
           <p className="text-[11px] text-zinc-400 mt-1 line-clamp-1">
-            Charger, info binaire, sauvegardes .bak
+            13 FW Officiels (Non-Field), Suite Python & CLI
           </p>
         </button>
 
@@ -156,17 +156,17 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
             <div className={`p-2 rounded-lg ${activeTab === 'mod-workshop' ? 'bg-cyan-500 text-black' : 'bg-zinc-800 text-zinc-300'}`}>
               <Wrench className="w-4 h-4" />
             </div>
-            <span className="text-[10px] uppercase font-bold text-zinc-400">Étape 2</span>
+            <span className="text-[10px] uppercase font-bold text-amber-400">Phase 2</span>
           </div>
           <h2 className={`text-sm font-bold ${activeTab === 'mod-workshop' ? 'text-cyan-300' : 'text-zinc-200'}`}>
-            L'Atelier de Mods
+            Atelier de Modifications
           </h2>
           <p className="text-[11px] text-zinc-400 mt-1 line-clamp-1">
-            Mods 1-Clic, Explorateur, Patches & DB
+            Mods 1-Clic, Explorateur, Slices AIF, SQLite DB
           </p>
         </button>
 
-        {/* Tab 3: Studio de Création */}
+        {/* Tab 3: Studio de Création & Rétro-Ingénierie */}
         <button
           id="nav-tab-creation-studio"
           onClick={() => handleTabChange('creation-studio')}
@@ -180,17 +180,17 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
             <div className={`p-2 rounded-lg ${activeTab === 'creation-studio' ? 'bg-cyan-500 text-black' : 'bg-zinc-800 text-zinc-300'}`}>
               <Cpu className="w-4 h-4" />
             </div>
-            <span className="text-[10px] uppercase font-bold text-zinc-400">Étape 3</span>
+            <span className="text-[10px] uppercase font-bold text-emerald-400">Phase 3</span>
           </div>
           <h2 className={`text-sm font-bold ${activeTab === 'creation-studio' ? 'text-cyan-300' : 'text-zinc-200'}`}>
-            Studio de Création
+            Studio & Rétro-Ingénierie
           </h2>
           <p className="text-[11px] text-zinc-400 mt-1 line-clamp-1">
-            20 Moteurs DSP, Rack Virtuel & Démo
+            20 Moteurs DSP, C++ Blackfin, Ghidra & Clés OTP
           </p>
         </button>
 
-        {/* Tab 4: Chaîne de Production */}
+        {/* Tab 4: Émulateur & Chaîne de Test */}
         <button
           id="nav-tab-production-pipeline"
           onClick={() => handleTabChange('production-pipeline')}
@@ -204,13 +204,13 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
             <div className={`p-2 rounded-lg ${activeTab === 'production-pipeline' ? 'bg-cyan-500 text-black' : 'bg-zinc-800 text-zinc-300'}`}>
               <Package className="w-4 h-4" />
             </div>
-            <span className="text-[10px] uppercase font-bold text-zinc-400">Étape 4</span>
+            <span className="text-[10px] uppercase font-bold text-purple-400">Phase 4</span>
           </div>
           <h2 className={`text-sm font-bold ${activeTab === 'production-pipeline' ? 'text-cyan-300' : 'text-zinc-200'}`}>
-            Chaîne de Production
+            Émulateur & Pipeline
           </h2>
           <p className="text-[11px] text-zinc-400 mt-1 line-clamp-1">
-            Reconditionner, Logs en direct, Flash USB
+            op1emu 320x160 Live, Tests Anti-Brick & Repack
           </p>
         </button>
       </nav>
@@ -253,6 +253,7 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
           <ProductionPipelinePanel
             modState={modState}
             setModState={setModState}
+            onOpenHardware={onSwitchToHardwareView}
           />
         )}
       </main>

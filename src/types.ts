@@ -146,7 +146,15 @@ export interface TombolaBall {
 
 // --- MODULAR FIRMWARE SUITE & RACK DATA TYPES ---
 
-export type DashboardTab = 'firmware-manager' | 'mod-workshop' | 'creation-studio' | 'production-pipeline';
+export type DashboardTab = 
+  | 'phase1-foundations' 
+  | 'phase2-workshop' 
+  | 'phase3-reverse-eng' 
+  | 'phase4-emulator-pipeline'
+  | 'firmware-manager' 
+  | 'mod-workshop' 
+  | 'creation-studio' 
+  | 'production-pipeline';
 
 export interface OfficialFirmwareInfo {
   id: string;
@@ -161,6 +169,51 @@ export interface OfficialFirmwareInfo {
   isModded: boolean;
   description: string;
   features: string[];
+}
+
+export interface PythonDevToolDef {
+  id: string;
+  name: string;
+  command: string;
+  installCommand: string;
+  description: string;
+  category: 'repack' | 'preset' | 'vector' | 'crypto' | 'disasm';
+  exampleUsage: string;
+}
+
+export interface EmulatorRegisters {
+  r0: string;
+  r1: string;
+  r2: string;
+  r3: string;
+  r4: string;
+  r5: string;
+  r6: string;
+  r7: string;
+  p0: string;
+  p1: string;
+  p2: string;
+  p3: string;
+  p4: string;
+  p5: string;
+  i0: string;
+  i1: string;
+  i2: string;
+  i3: string;
+  astat: string;
+  pc: string;
+  cycles: number;
+  dspLoadPercent: number;
+}
+
+export interface EmulatorTestCase {
+  id: string;
+  name: string;
+  category: 'DSP' | 'MEMORY' | 'CRC' | 'AUDIO' | 'BOOT';
+  description: string;
+  status: 'PENDING' | 'RUNNING' | 'PASSED' | 'FAILED';
+  durationMs: number;
+  detail: string;
 }
 
 export interface FirmwareFileNode {
