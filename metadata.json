@@ -1,0 +1,6 @@
+{
+  "name": "Az-OP-1 Studio & Firmware Lab",
+  "description": "Teenage Engineering OP-1 synthesizer workstation, 4-track tape machine, and custom firmware patcher/modding lab.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
