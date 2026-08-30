@@ -22,7 +22,6 @@ export interface VmStatus {
   instructions: string;
   mips: number;
   cpuLoadPercent: number;
-  coreTempC: number;
   executionError: string | null;
 }
 
@@ -286,7 +285,6 @@ export class OP1VirtualMachine {
       instructions: this.cpu.regs.instructions.toString(),
       mips: Math.round(this.currentMips * 10) / 10,
       cpuLoadPercent: this.cpuLoad,
-      coreTempC: Math.round(38.0 + (this.cpuLoad * 0.22)),
       executionError: this.cpu.executionError,
     };
 

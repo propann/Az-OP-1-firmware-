@@ -60,7 +60,6 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
     instructions: '0',
     mips: 0,
     cpuLoadPercent: 0,
-    coreTempC: 38,
     executionError: null,
   });
 
@@ -252,7 +251,7 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
         </header>
 
         {/* SUB-HEADER: TELEMETRY & HARDWARE GAUGES */}
-        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 p-3 bg-[#151922] border-b border-neutral-800/80 text-xs font-mono">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-3 bg-[#151922] border-b border-neutral-800/80 text-xs font-mono">
           <div className="p-2 rounded-xl bg-[#1c212c] border border-neutral-800 flex flex-col">
             <span className="text-[10px] text-neutral-400 font-bold uppercase">PROGRAM COUNTER (PC)</span>
             <span className="text-cyan-400 font-black text-sm">
@@ -273,11 +272,6 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
           <div className="p-2 rounded-xl bg-[#1c212c] border border-neutral-800 flex flex-col">
             <span className="text-[10px] text-neutral-400 font-bold uppercase">CHARGE DSP CORE</span>
             <span className="text-purple-400 font-black text-sm">{vmStatus.cpuLoadPercent}%</span>
-          </div>
-
-          <div className="p-2 rounded-xl bg-[#1c212c] border border-neutral-800 flex flex-col">
-            <span className="text-[10px] text-neutral-400 font-bold uppercase">TEMPÉRATURE CORE</span>
-            <span className="text-orange-400 font-black text-sm">{vmStatus.coreTempC} °C</span>
           </div>
 
           <div className="p-2 rounded-xl bg-[#1c212c] border border-neutral-800 flex flex-col">

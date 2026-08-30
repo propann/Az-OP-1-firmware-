@@ -13,6 +13,7 @@ import { CpuRegisters } from '../emulator/blackfinCpu';
 import { DisassembledInstruction } from '../emulator/disassembler';
 import { LdrParser, ParsedLdrFirmware } from '../emulator/ldrParser';
 import { audioEngine } from '../audio/engine';
+import { OFFICIAL_FIRMWARES } from '../data/firmwareData';
 import { KnobControl } from './KnobControl';
 import { Keyboard } from './Keyboard';
 import { MidiControllerBar } from './MidiControllerBar';
@@ -50,7 +51,8 @@ import {
   Sparkles, 
   Dices,
   RefreshCw,
-  Eye
+  Eye,
+  HardDrive
 } from 'lucide-react';
 
 interface BlackfinHardwareLabProps {
@@ -108,7 +110,6 @@ export const BlackfinHardwareLab: React.FC<BlackfinHardwareLabProps> = ({
     instructions: '0',
     mips: 0,
     cpuLoadPercent: 0,
-    coreTempC: 38,
     executionError: null,
   });
 
@@ -118,6 +119,7 @@ export const BlackfinHardwareLab: React.FC<BlackfinHardwareLabProps> = ({
   const [memBaseAddr, setMemBaseAddr] = useState<string>('0x00001000');
   const [memRows, setMemRows] = useState<{ address: number; bytes: number[]; ascii: string }[]>([]);
   const [selectedFixture, setSelectedFixture] = useState<'alu_diagnostic' | 'teboot_vector' | 'sport0_audio' | 'ppi_framebuffer'>('alu_diagnostic');
+  const [selectedOfficialFw, setSelectedOfficialFw] = useState<string>('op1-fw-243-stock');
   const [analysisReport, setAnalysisReport] = useState<ParsedLdrFirmware | null>(null);
   const [isCrtGlow, setIsCrtGlow] = useState<boolean>(false);
   const [activeMidiNotes, setActiveMidiNotes] = useState<number[]>([]);
@@ -208,6 +210,20 @@ export const BlackfinHardwareLab: React.FC<BlackfinHardwareLabProps> = ({
     refreshMemoryView(op1Vm.cpu.regs.pc);
     audioEngine.playChime('boot');
     addTerminalLog('info', `Fixture de test chargée : ${type}. Vecteur de reset initialisé à 0x00001000.`);
+  };
+
+  // Official Factory Firmware Loading & Specification Configuration
+  const handleLoadOfficialFirmware = (fwId: string) => {
+    setSelectedOfficialFw(fwId);
+    const fw = OFFICIAL_FIRMWARES.find(f => f.id === fwId);
+    if (!fw) return;
+
+    // Load firmware shape into VM
+    const versionNumber = fw.version.replace('v', '').split('-')[0] || '243';
+    op1Vm.loadFactoryFirmware(versionNumber, fw.isModded);
+    refreshMemoryView(op1Vm.cpu.regs.pc);
+    audioEngine.playChime('boot');
+    addTerminalLog('info', `Firmware officiel sélectionné : ${fw.version} (${fw.fileName}, CRC32: 0x${fw.crc32}).`);
   };
 
   // File Upload Handler (.op1 / .ldr / .bin)
@@ -444,22 +460,43 @@ export const BlackfinHardwareLab: React.FC<BlackfinHardwareLabProps> = ({
           </div>
         </div>
 
-        {/* Row 2: Diagnostic Fixture Selector, Upload .op1/.ldr, Speed Multiplier & Audio Master */}
+        {/* Row 2: Official Firmware Selector, Diagnostic Fixture Selector, Upload .op1/.ldr, Speed Multiplier & Audio Master */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-neutral-800 text-xs">
           
-          {/* Diagnostic Fixture ROM Selector */}
+          {/* ROM & Firmware Selectors */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-neutral-400">FIXTURE LDR :</span>
-            <select
-              value={selectedFixture}
-              onChange={(e) => handleLoadFixture(e.target.value as any)}
-              className="px-2.5 py-1 rounded-xl bg-[#11141a] text-white border border-neutral-700 text-xs font-bold focus:outline-none focus:border-cyan-500 cursor-pointer"
-            >
-              <option value="alu_diagnostic">diagnostic_bf524.ldr (ALU & NOP)</option>
-              <option value="teboot_vector">te-boot_vector_test.ldr (Bootloader Matrix)</option>
-              <option value="sport0_audio">sport0_audio_dma_sine.ldr (Audio DMA 44.1kHz)</option>
-              <option value="ppi_framebuffer">ppi_framebuffer_320x160.ldr (PPI Video DMA)</option>
-            </select>
+            {/* Official OP-1 Firmware Selector */}
+            <div className="flex items-center gap-1.5">
+              <HardDrive className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="font-bold text-neutral-400">FIRMWARE OP-1 :</span>
+              <select
+                value={selectedOfficialFw}
+                onChange={(e) => handleLoadOfficialFirmware(e.target.value)}
+                className="px-2.5 py-1 rounded-xl bg-[#11141a] text-white border border-emerald-500/40 text-xs font-bold focus:outline-none focus:border-emerald-500 cursor-pointer"
+                title="Sélectionner une version de firmware officiel OP-1"
+              >
+                {OFFICIAL_FIRMWARES.map((fw) => (
+                  <option key={fw.id} value={fw.id}>
+                    {fw.version} ({fw.fileName}) {fw.isModded ? '★ MOD' : '● STOCK'}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Diagnostic Fixture ROM Selector */}
+            <div className="flex items-center gap-1.5 ml-1">
+              <span className="font-bold text-neutral-400">FIXTURE :</span>
+              <select
+                value={selectedFixture}
+                onChange={(e) => handleLoadFixture(e.target.value as any)}
+                className="px-2.5 py-1 rounded-xl bg-[#11141a] text-white border border-neutral-700 text-xs font-bold focus:outline-none focus:border-cyan-500 cursor-pointer"
+              >
+                <option value="alu_diagnostic">diagnostic_bf524.ldr (ALU & NOP)</option>
+                <option value="teboot_vector">te-boot_vector_test.ldr (Bootloader Matrix)</option>
+                <option value="sport0_audio">sport0_audio_dma_sine.ldr (Audio DMA 44.1kHz)</option>
+                <option value="ppi_framebuffer">ppi_framebuffer_320x160.ldr (PPI Video DMA)</option>
+              </select>
+            </div>
 
             {/* Upload Button */}
             <input
@@ -473,7 +510,7 @@ export const BlackfinHardwareLab: React.FC<BlackfinHardwareLabProps> = ({
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="px-2.5 py-1 rounded-xl bg-cyan-950/60 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/40 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+              className="px-2.5 py-1 rounded-xl bg-cyan-950/60 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/40 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer active:scale-95 ml-1"
               title="Charger un fichier .op1 ou .ldr externe"
             >
               <Upload className="w-3.5 h-3.5" />
@@ -527,8 +564,8 @@ export const BlackfinHardwareLab: React.FC<BlackfinHardwareLabProps> = ({
         </div>
       </header>
 
-      {/* 2. REAL-TIME HARDWARE TELEMETRY RIBBON */}
-      <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs font-mono">
+      {/* 2. REAL-TIME HARDWARE TELEMETRY RIBBON (REAL EMULATION DATA ONLY) */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs font-mono">
         <div className="p-2.5 rounded-2xl bg-[#141822] border border-[#2b3345] flex flex-col">
           <span className="text-[10px] text-neutral-400 font-bold uppercase">PROGRAM COUNTER (PC)</span>
           <span className="text-cyan-400 font-black text-sm">
@@ -549,11 +586,6 @@ export const BlackfinHardwareLab: React.FC<BlackfinHardwareLabProps> = ({
         <div className="p-2.5 rounded-2xl bg-[#141822] border border-[#2b3345] flex flex-col">
           <span className="text-[10px] text-neutral-400 font-bold uppercase">CHARGE DSP CORE</span>
           <span className="text-purple-400 font-black text-sm">{vmStatus.cpuLoadPercent}%</span>
-        </div>
-
-        <div className="p-2.5 rounded-2xl bg-[#141822] border border-[#2b3345] flex flex-col">
-          <span className="text-[10px] text-neutral-400 font-bold uppercase">TEMPÉRATURE CORE</span>
-          <span className="text-orange-400 font-black text-sm">{vmStatus.coreTempC} °C</span>
         </div>
 
         <div className="p-2.5 rounded-2xl bg-[#141822] border border-[#2b3345] flex flex-col">
