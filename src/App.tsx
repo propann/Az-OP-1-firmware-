@@ -18,6 +18,7 @@ import { OFFICIAL_FIRMWARES } from './data/firmwareData';
 import { OledDisplay } from './components/OledDisplay';
 import { KnobControl } from './components/KnobControl';
 import { Keyboard } from './components/Keyboard';
+import { MidiControllerBar } from './components/MidiControllerBar';
 import { OP1Button } from './components/OP1Button';
 import { webMidi } from './midi/midiManager';
 import { ModularDashboard } from './components/ModularDashboard';
@@ -228,6 +229,9 @@ export const App: React.FC = () => {
           }),
           webMidi.onPitchBend((bendVal) => {
             audioEngine.setPitchBend(bendVal * 2);
+          }),
+          webMidi.onMatrixKey((keyIndex, pressed) => {
+            op1Vm.peripherals.setKey(keyIndex, pressed);
           })
         );
       }
@@ -254,7 +258,7 @@ export const App: React.FC = () => {
 
     const steps = [
       { p: 25, msg: 'VÉRIFICATION CHECKSUM CRC32...' },
-      { p: 50, msg: 'INITIALISATION DSP ADSP-BF533...' },
+      { p: 50, msg: 'INITIALISATION DSP ADSP-BF524...' },
       { p: 75, msg: 'MONTAGE FLASH / OP1_factory.db...' },
       { p: 90, msg: 'CALIBRATION CODEC CIRRUS LOGIC 24-BIT...' },
       { p: 100, msg: 'SYSTÈME PRÊT' }
@@ -476,7 +480,7 @@ export const App: React.FC = () => {
               id="open-real-emulator-btn"
               onClick={() => setIsRealEmulatorOpen(true)}
               className="px-3.5 py-1 rounded-xl bg-gradient-to-r from-cyan-950/80 to-blue-950/80 hover:from-cyan-900 hover:to-blue-900 border border-cyan-400/60 text-cyan-300 text-xs font-black flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-lg shadow-cyan-950/50 animate-pulse"
-              title="Ouvrir l'Émulateur Matériel Blackfin ADSP-BF533 (Exécution Réelle du Binaire)"
+              title="Ouvrir le laboratoire BF524 (analyse réelle, exécution expérimentale)"
             >
               <Zap className="w-3.5 h-3.5 text-cyan-400 fill-current" />
               <span>⚡ ÉMULATEUR BLACKFIN</span>
@@ -501,7 +505,7 @@ export const App: React.FC = () => {
               id="open-engineering-lab-btn"
               onClick={() => setIsEngineeringLabOpen(true)}
               className="px-3 py-1 rounded-xl bg-purple-950/40 hover:bg-purple-900/60 border border-purple-500/50 text-purple-300 text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
-              title="Ouvrir le Laboratoire DSP & Reverse-Engineering Blackfin ADSP-BF533"
+              title="Ouvrir le Laboratoire DSP & Reverse-Engineering Blackfin ADSP-BF524"
             >
               <Cpu className="w-3.5 h-3.5 text-purple-400" />
               <span>🔬 Engineering Lab</span>
@@ -737,7 +741,7 @@ export const App: React.FC = () => {
               )}
             </div>
 
-            {/* Center: Recessed OLED Screen (320x240) */}
+            {/* Center: Recessed OLED Screen (320x160) */}
             <div className="lg:col-span-5 flex flex-col items-center justify-center">
               <div className="w-full max-w-[340px] aspect-[4/3] rounded-2xl bg-black border-4 border-neutral-900 shadow-2xl p-1 relative overflow-hidden flex items-center justify-center">
                 <OledDisplay
@@ -890,13 +894,15 @@ export const App: React.FC = () => {
 
           {/* BOTTOM SECTION: 24 CIRCULAR KEYS BED (AUTHENTIC TEENAGE ENGINEERING KEYBED) */}
           <section className="pt-1">
+            <MidiControllerBar />
             <Keyboard
               onNoteOn={handleNoteOn}
               onNoteOff={handleNoteOff}
               activeNotes={activeMidiNotes}
               octave={octave}
               onOctaveChange={setOctave}
-              onPitchBend={(_semi) => {}}
+              onPitchBend={(semitones) => audioEngine.setPitchBend(semitones)}
+              onKeyMatrixChange={(keyIndex, pressed) => op1Vm.peripherals.setKey(keyIndex, pressed)}
             />
           </section>
         </main>
@@ -908,7 +914,7 @@ export const App: React.FC = () => {
           Firmware Actif : <strong className="text-orange-400">{modState.firmwareVersion}</strong> (CRC32: 0x{modState.targetChecksum})
         </div>
         <div>
-          Blackfin ADSP-BF533 Emulation • Cirrus Logic 24-Bit 44.1kHz DMA • TE-BOOT Ready
+          Blackfin ADSP-BF524 Emulation • Cirrus Logic 24-Bit 44.1kHz DMA • TE-BOOT Ready
         </div>
       </footer>
 
@@ -952,7 +958,7 @@ export const App: React.FC = () => {
         }}
       />
 
-      {/* MODAL 5: REAL BLACKFIN ADSP-BF533 HARDWARE EMULATOR */}
+      {/* MODAL 5: REAL BLACKFIN ADSP-BF524 HARDWARE EMULATOR */}
       <RealBlackfinEmulatorModal
         isOpen={isRealEmulatorOpen}
         onClose={() => setIsRealEmulatorOpen(false)}

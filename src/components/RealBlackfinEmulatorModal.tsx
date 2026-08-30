@@ -1,6 +1,6 @@
 // ============================================================================
-// OP-1 BLACKFIN ADSP-BF533 HARDWARE EMULATOR & REVERSE-ENGINEERING COCKPIT
-// Native binary execution, cycle-accurate stepping, LDR loader, register viewer
+// OP-1 ADSP-BF524 firmware analyser and experimental execution cockpit.
+// Static validation is reference-backed; CPU execution remains incomplete.
 // ============================================================================
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -51,9 +51,9 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
     isRunning: false,
     isPaused: false,
     isBooted: false,
-    loadedFirmwareName: 'op1_factory_243.op1',
-    firmwareCrc32: '8B39DF12',
-    totalLoadedBytes: 65536,
+    loadedFirmwareName: 'diagnostic_bf524.ldr',
+    firmwareCrc32: '00000000',
+    totalLoadedBytes: 34,
     entryPoint: 0x00001000,
     pc: 0x00001000,
     cycles: '0',
@@ -71,6 +71,8 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
   const [memRows, setMemRows] = useState<{ address: number; bytes: number[]; ascii: string }[]>([]);
   const [selectedFirmwareVer, setSelectedFirmwareVer] = useState<string>('243');
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [analysisMessage, setAnalysisMessage] = useState('Chargez un .op1 pour vérifier son CRC/LZMA, ou un .ldr BF52x pour inspecter ses blocs.');
+  const [analysisOk, setAnalysisOk] = useState<boolean | null>(null);
   const [encoderValues, setEncoderValues] = useState({
     blue: 50,
     green: 50,
@@ -122,7 +124,13 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
     reader.onload = (e) => {
       if (e.target?.result instanceof ArrayBuffer) {
         const bytes = new Uint8Array(e.target.result);
-        const success = op1Vm.loadFirmwareBinary(bytes, file.name);
+        const report = LdrParser.parse(bytes, file.name);
+        const details = report.format === 'op1-container'
+          ? `OP-1 • CRC ${report.crc32Valid ? 'valide' : 'invalide'} • LZMA dict ${report.lzmaDictionarySize || 0} octets`
+          : `LDR BF52x • ${report.blocks.length} blocs • ${report.errors.length} erreur(s)`;
+        setAnalysisOk(report.isValid);
+        setAnalysisMessage(report.errors[0] || report.warnings[0] || details);
+        const success = report.isExecutableByExperimentalCore && op1Vm.loadFirmwareBinary(bytes, file.name);
         if (success) {
           refreshMemoryView(op1Vm.cpu.regs.pc);
         }
@@ -148,7 +156,7 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-black text-sm tracking-wider text-white">
-                  ÉMULATEUR MATÉRIEL BLACKFIN ADSP-BF533
+                  LAB FIRMWARE OP-1 · ADSP-BF524
                 </h2>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                   vmStatus.isRunning 
@@ -161,7 +169,7 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
                 </span>
               </div>
               <p className="text-[11px] text-neutral-400">
-                Exécution native du binaire de firmware OP-1 • Dual-MAC 16/32-bit RISC DSP
+                Validation réelle des formats • cœur CPU TypeScript expérimental, non cycle-accurate
               </p>
             </div>
           </div>
@@ -287,7 +295,7 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
             <div className="flex items-center justify-between border-b border-neutral-700/60 pb-2">
               <span className="text-xs font-black tracking-wider text-cyan-400 uppercase flex items-center gap-1.5">
                 <Binary className="w-3.5 h-3.5" />
-                <span>REGISTRES CPU (ADSP-BF533)</span>
+                <span>REGISTRES CPU (ADSP-BF524)</span>
               </span>
               <span className="text-[10px] font-mono text-neutral-400">32-Bit Dual-MAC</span>
             </div>
@@ -413,17 +421,17 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black tracking-wider text-white uppercase flex items-center gap-1.5">
                   <Activity className="w-3.5 h-3.5 text-orange-400" />
-                  <span>FRAMEBUFFER PPI DIRECT (SSD1351 OLED 320x240)</span>
+                  <span>FRAMEBUFFER DIAGNOSTIC (320x160)</span>
                 </span>
                 <span className="text-[10px] text-neutral-400 font-mono">DMA0 Stream • 60 FPS</span>
               </div>
 
               {/* OLED Canvas Container */}
-              <div className="w-full aspect-[4/3] rounded-xl bg-black border-2 border-neutral-800 shadow-inner flex items-center justify-center overflow-hidden relative">
+              <div className="w-full aspect-[2/1] rounded-xl bg-black border-2 border-neutral-800 shadow-inner flex items-center justify-center overflow-hidden relative">
                 <canvas
                   ref={canvasRef}
                   width={320}
-                  height={240}
+                  height={160}
                   className="w-full h-full object-contain"
                 />
                 {!vmStatus.isRunning && (
@@ -522,9 +530,19 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
                 </button>
               </div>
 
-              {/* Factory Pre-packaged Firmware Selector */}
+              <div className={`rounded-xl border px-3 py-2 text-[11px] font-medium ${
+                analysisOk === true
+                  ? 'border-emerald-700 bg-emerald-950/30 text-emerald-200'
+                  : analysisOk === false
+                  ? 'border-red-700 bg-red-950/30 text-red-200'
+                  : 'border-neutral-700 bg-neutral-950/30 text-neutral-300'
+              }`}>
+                {analysisMessage}
+              </div>
+
+              {/* Built-in diagnostic stream: never presented as TE firmware. */}
               <div className="flex items-center gap-2 pt-1">
-                <span className="text-[11px] text-neutral-400">Firmwares Officiels :</span>
+                <span className="text-[11px] text-neutral-400">Fixture locale :</span>
                 <select
                   value={selectedFirmwareVer}
                   onChange={(e) => {
@@ -533,18 +551,8 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
                   }}
                   className="flex-1 px-2.5 py-1 rounded-xl bg-[#11141a] text-white border border-neutral-700 text-xs font-bold focus:outline-none cursor-pointer"
                 >
-                  <option value="243">op1_factory_243.op1 (Dernier Officiel)</option>
-                  <option value="242">op1_factory_242.op1 (Version Stable)</option>
-                  <option value="235">op1_factory_235.op1 (Support Arpège)</option>
-                  <option value="218">op1_factory_218.op1 (Legacy)</option>
+                  <option value="243">diagnostic_bf524.ldr (NOP + FINAL)</option>
                 </select>
-                <button
-                  onClick={() => op1Vm.loadFactoryFirmware(selectedFirmwareVer, true)}
-                  className="px-2.5 py-1 rounded-xl bg-orange-950 text-orange-300 border border-orange-800 text-[11px] font-bold hover:bg-orange-900 transition cursor-pointer"
-                  title="Charger la version modifiée avec synthé Iter débloqué"
-                >
-                  + Mod Iter
-                </button>
               </div>
             </div>
 
@@ -740,7 +748,7 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
         {/* FOOTER BAR: CHECKSUM & EMULATOR SIGNATURE */}
         <footer className="p-3 bg-[#181c25] border-t border-neutral-800 flex flex-wrap items-center justify-between text-xs text-neutral-400 font-mono">
           <div>
-            Noyau ADSP-BF533 • DMA SPORT0 & PPI Active • CRC32 Firmware : <strong className="text-orange-400">0x{vmStatus.firmwareCrc32}</strong>
+            Noyau ADSP-BF524 • DMA SPORT0 & PPI Active • CRC32 Firmware : <strong className="text-orange-400">0x{vmStatus.firmwareCrc32}</strong>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>

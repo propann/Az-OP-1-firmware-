@@ -875,7 +875,7 @@ export const ModificationWorkshopPanel: React.FC<ModificationWorkshopPanelProps>
             </div>
 
             <p className="text-xs text-zinc-400 font-mono">
-              Vérificateur d'intégrité de gammes microtonales et calibration de table d'accordage pour Blackfin ADSP-BF533.
+              Vérificateur d'intégrité de gammes microtonales et calibration de table d'accordage pour Blackfin ADSP-BF524.
             </p>
 
             <div className="grid grid-cols-2 gap-3 font-mono text-xs">

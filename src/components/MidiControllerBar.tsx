@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { webMidi } from '../midi/midiManager';
 import { MidiDeviceInfo, MidiMessageLog } from '../types';
+import type { MidiMappingConfig } from '../types';
 import { audioEngine } from '../audio/engine';
 
 interface MidiControllerBarProps {
@@ -36,6 +37,14 @@ export const MidiControllerBar: React.FC<MidiControllerBarProps> = ({
   const [isMonitorOpen, setIsMonitorOpen] = useState(false);
   const [lastActivity, setLastActivity] = useState<string | null>(null);
   const [isActivityFlashing, setIsActivityFlashing] = useState(false);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [mapping, setMapping] = useState<MidiMappingConfig>({ ...webMidi.mapping });
+  const [learnTarget, setLearnTarget] = useState<keyof Pick<MidiMappingConfig, 'blueKnobCC' | 'greenKnobCC' | 'whiteKnobCC' | 'orangeKnobCC'> | null>(null);
+
+  const updateMapping = (next: Partial<MidiMappingConfig>) => {
+    webMidi.updateMapping(next);
+    setMapping({ ...webMidi.mapping });
+  };
 
   useEffect(() => {
     const supported = webMidi.checkSupport();
@@ -57,6 +66,10 @@ export const MidiControllerBar: React.FC<MidiControllerBarProps> = ({
       setLastActivity(log.formatted);
       setIsActivityFlashing(true);
       setTimeout(() => setIsActivityFlashing(false), 150);
+      if (learnTarget && log.type === 'cc') {
+        updateMapping({ [learnTarget]: log.data1 });
+        setLearnTarget(null);
+      }
     });
 
     const unsubCC = webMidi.onCC((cc, val) => {
@@ -77,7 +90,7 @@ export const MidiControllerBar: React.FC<MidiControllerBarProps> = ({
       unsubLog();
       unsubCC();
     };
-  }, [onKnobChange]);
+  }, [learnTarget, onKnobChange]);
 
   const handleDeviceSelect = (id: string) => {
     webMidi.setActiveDevice(id);
@@ -207,8 +220,42 @@ export const MidiControllerBar: React.FC<MidiControllerBarProps> = ({
             <span>Moniteur MIDI</span>
             {isMonitorOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
+          <button
+            onClick={() => setIsConfigOpen(!isConfigOpen)}
+            className={`px-2.5 py-1 rounded-lg border text-[11px] ${isConfigOpen ? 'bg-orange-950 text-orange-300 border-orange-500' : 'bg-neutral-950 border-neutral-800 text-neutral-300'}`}
+          >
+            <Sliders className="inline w-3.5 h-3.5 mr-1" />CONFIG / LEARN
+          </button>
         </div>
       </div>
+
+      {isConfigOpen && (
+        <div className="mt-3 grid gap-3 border-t border-neutral-800 pt-3 md:grid-cols-3">
+          <div className="rounded-lg border border-neutral-800 bg-black/40 p-3">
+            <strong className="text-cyan-300">ENTRÉE OP-1</strong>
+            <label className="mt-2 flex items-center justify-between gap-2 text-neutral-300">Canal (0 = omni)
+              <input className="w-16 rounded bg-neutral-900 p-1" type="number" min="0" max="16" value={mapping.inputChannel} onChange={(e) => updateMapping({ inputChannel: Number(e.target.value) })} />
+            </label>
+            <label className="mt-2 flex items-center justify-between gap-2 text-neutral-300">Première note
+              <input className="w-16 rounded bg-neutral-900 p-1" type="number" min="0" max="104" value={mapping.matrixBaseNote} onChange={(e) => updateMapping({ matrixBaseNote: Number(e.target.value) })} />
+            </label>
+            <label className="mt-2 flex items-center gap-2 text-neutral-300"><input type="checkbox" checked={mapping.matrixRoutingEnabled} onChange={(e) => updateMapping({ matrixRoutingEnabled: e.target.checked })} />Router vers matrice BF524</label>
+          </div>
+          <div className="rounded-lg border border-neutral-800 bg-black/40 p-3 md:col-span-2">
+            <strong className="text-orange-300">MIDI LEARN ENCODEURS</strong>
+            <div className="mt-2 grid grid-cols-2 gap-2 lg:grid-cols-4">
+              {([
+                ['blueKnobCC', 'Bleu'], ['greenKnobCC', 'Vert'], ['whiteKnobCC', 'Blanc'], ['orangeKnobCC', 'Orange'],
+              ] as const).map(([field, label]) => (
+                <button key={field} onClick={() => setLearnTarget(field)} className={`rounded border p-2 text-left ${learnTarget === field ? 'border-yellow-400 bg-yellow-950 text-yellow-200' : 'border-neutral-700 bg-neutral-900 text-neutral-300'}`}>
+                  <span className="block font-bold">{label}</span><span>CC {mapping[field]}</span><small className="block text-neutral-500">{learnTarget === field ? 'Bougez le contrôle…' : 'Cliquer pour Learn'}</small>
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-[10px] text-neutral-500">Profil enregistré localement. Les notes comprises entre la première note et +23 alimentent directement les 24 bits de la matrice expérimentale.</p>
+          </div>
+        </div>
+      )}
 
       {/* Expandable Live MIDI Monitor Drawer */}
       {isMonitorOpen && (

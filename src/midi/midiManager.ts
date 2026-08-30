@@ -6,6 +6,9 @@ type CCCallback = (cc: number, value: number) => void;
 type PitchBendCallback = (value: number) => void;
 type DeviceChangeCallback = (devices: MidiDeviceInfo[], activeDevice: MidiDeviceInfo | null) => void;
 type LogCallback = (log: MidiMessageLog) => void;
+type MatrixKeyCallback = (keyIndex: number, pressed: boolean, velocity: number) => void;
+
+const MIDI_MAPPING_STORAGE_KEY = 'az-op1-midi-mapping-v1';
 
 export class WebMidiManager {
   private midiAccess: any = null;
@@ -23,9 +26,13 @@ export class WebMidiManager {
   private pitchBendListeners: Set<PitchBendCallback> = new Set();
   private deviceChangeListeners: Set<DeviceChangeCallback> = new Set();
   private logListeners: Set<LogCallback> = new Set();
+  private matrixKeyListeners: Set<MatrixKeyCallback> = new Set();
 
   // Mapping - Fully conforming to official Teenage Engineering OP-1 MIDI Specification
   public mapping: MidiMappingConfig = {
+    inputChannel: 0,     // 0 = omni, 1..16 = canal filtré
+    matrixBaseNote: 53,  // F3, première touche physique dans le profil par défaut
+    matrixRoutingEnabled: true,
     blueKnobCC: 1,      // Modulation / OP-1 Blue Encoder (CC1 or CC16)
     greenKnobCC: 2,     // Breath / OP-1 Green Encoder (CC2 or CC17)
     whiteKnobCC: 3,     // OP-1 White Encoder (CC3 or CC18)
@@ -41,7 +48,20 @@ export class WebMidiManager {
   };
 
   constructor() {
+    this.loadMapping();
     this.checkSupport();
+  }
+
+  private loadMapping() {
+    try {
+      const raw = typeof localStorage === 'undefined' ? null : localStorage.getItem(MIDI_MAPPING_STORAGE_KEY);
+      if (raw) this.mapping = { ...this.mapping, ...JSON.parse(raw) };
+    } catch { /* profil invalide : valeurs sûres par défaut */ }
+  }
+
+  public updateMapping(next: Partial<MidiMappingConfig>) {
+    this.mapping = { ...this.mapping, ...next };
+    try { localStorage.setItem(MIDI_MAPPING_STORAGE_KEY, JSON.stringify(this.mapping)); } catch { /* stockage optionnel */ }
   }
 
   public checkSupport(): boolean {
@@ -130,6 +150,9 @@ export class WebMidiManager {
     const channel = (status & 0xf) + 1;
     const data1 = data.length > 1 ? data[1] : 0;
     const data2 = data.length > 2 ? data[2] : 0;
+    const sourceId = event.currentTarget?.id || event.target?.id;
+    if (this.activeDeviceId && sourceId && sourceId !== this.activeDeviceId) return;
+    if (this.mapping.inputChannel !== 0 && channel !== this.mapping.inputChannel) return;
 
     const timeStr = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
@@ -138,6 +161,10 @@ export class WebMidiManager {
       const note = data1;
       const velocity = data2;
       this.noteOnListeners.forEach(cb => cb(note, velocity));
+      if (this.mapping.matrixRoutingEnabled) {
+        const keyIndex = note - this.mapping.matrixBaseNote;
+        if (keyIndex >= 0 && keyIndex < 24) this.matrixKeyListeners.forEach(cb => cb(keyIndex, true, velocity));
+      }
       this.addLog({
         id: `log-${Date.now()}-${Math.random()}`,
         timestamp: timeStr,
@@ -154,6 +181,10 @@ export class WebMidiManager {
     if (messageType === 0x8 || (messageType === 0x9 && data2 === 0)) {
       const note = data1;
       this.noteOffListeners.forEach(cb => cb(note));
+      if (this.mapping.matrixRoutingEnabled) {
+        const keyIndex = note - this.mapping.matrixBaseNote;
+        if (keyIndex >= 0 && keyIndex < 24) this.matrixKeyListeners.forEach(cb => cb(keyIndex, false, 0));
+      }
       this.addLog({
         id: `log-${Date.now()}-${Math.random()}`,
         timestamp: timeStr,
@@ -284,6 +315,11 @@ export class WebMidiManager {
   public onLog(cb: LogCallback) {
     this.logListeners.add(cb);
     return () => this.logListeners.delete(cb);
+  }
+
+  public onMatrixKey(cb: MatrixKeyCallback) {
+    this.matrixKeyListeners.add(cb);
+    return () => this.matrixKeyListeners.delete(cb);
   }
 }
 

@@ -1,6 +1,6 @@
 // ============================================================================
-// BLACKFIN ADSP-BF533 PERIPHERALS & I/O CONTROLLER (OP-1 HARDWARE BOARD)
-// Emulates SPORT0 (CS4270 Codec), PPI (SSD1351 OLED), & Keyboard/Encoder Matrix
+// EXPERIMENTAL ADSP-BF524 PERIPHERAL ADAPTERS
+// Addresses below are placeholders until verified against an OP-1 board trace.
 // ============================================================================
 
 import { MemoryBus } from './memoryBus';
@@ -9,7 +9,7 @@ import { BlackfinCpu } from './blackfinCpu';
 export interface DisplayFrameBuffer {
   width: number;
   height: number;
-  data: Uint8ClampedArray; // 320x240 RGBA
+  data: Uint8ClampedArray; // 320x160 RGBA
   fps: number;
   lastFrameTime: number;
 }
@@ -18,7 +18,7 @@ export class HardwarePeripherals {
   public bus: MemoryBus;
   public cpu: BlackfinCpu;
 
-  // OLED Display Framebuffer (320 x 240)
+  // OP-1 display-sized virtual framebuffer (320 x 160)
   public display: DisplayFrameBuffer;
   public onDisplayRefresh?: (imageData: ImageData) => void;
 
@@ -45,9 +45,9 @@ export class HardwarePeripherals {
     this.bus = bus;
     this.cpu = cpu;
 
-    // 320x240 RGB OLED Display Framebuffer
+    // 320x160 display-sized diagnostic framebuffer
     const w = 320;
-    const h = 240;
+    const h = 160;
     this.display = {
       width: w,
       height: h,
@@ -177,12 +177,12 @@ export class HardwarePeripherals {
 
   // Render Framebuffer from SDRAM / PPI DMA buffer to Canvas ImageData
   public renderPpiFrame() {
-    const ppiBase = 0x00010000; // Standard OP-1 Framebuffer address in SDRAM
+    const ppiBase = 0x00010000; // Experimental mapping; not yet board-verified.
     const d = this.display.data;
     let p = 0;
 
-    // Read 320x240 RGB565 buffer from virtual SDRAM
-    for (let y = 0; y < 240; y++) {
+    // Read 320x160 RGB565 buffer from virtual SDRAM
+    for (let y = 0; y < 160; y++) {
       for (let x = 0; x < 320; x++) {
         const addr = (ppiBase + (y * 320 + x) * 2) >>> 0;
         const rgb565 = this.bus.read16(addr);
@@ -203,7 +203,7 @@ export class HardwarePeripherals {
 
     if (this.onDisplayRefresh) {
       const clamped = new Uint8ClampedArray(this.display.data.buffer as ArrayBuffer);
-      const img = new ImageData(clamped, 320, 240);
+      const img = new ImageData(clamped, 320, 160);
       this.onDisplayRefresh(img);
     }
   }

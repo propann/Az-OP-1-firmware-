@@ -93,7 +93,7 @@ export const WorkspacesAndExtractionView: React.FC<WorkspacesAndExtractionViewPr
           archiveName: 'TE_OP1_Original_Complete_Firmware_Library_v061_to_v246.zip',
           timestamp: new Date().toISOString(),
           totalFirmwares: OFFICIAL_FIRMWARES.length,
-          targetCpu: 'Analog Devices ADSP-BF533 Blackfin DSP',
+          targetCpu: 'Analog Devices ADSP-BF524 Blackfin DSP',
           firmwares: OFFICIAL_FIRMWARES.map(fw => ({
             version: fw.version,
             fileName: fw.fileName,
@@ -152,7 +152,7 @@ export const WorkspacesAndExtractionView: React.FC<WorkspacesAndExtractionViewPr
     setIsUnpacking(true);
     setUnpackLogs([
       `[op1repacker] Début de copie du firmware source vers ${activeWs.path}...`,
-      `[LZMA] Décompression du flux Blackfin ADSP-BF533...`,
+      `[LZMA] Décompression du flux Blackfin ADSP-BF524...`,
       `[Tree] Création des répertoires /synth, /drum, /gfx, /system, /dsp_custom`,
       `[SQLite] Extraction et indexation de OP1_factory.db`,
       `[AIFF] Découpe des transitoires d'échantillons de batterie (24 tranches)`
@@ -418,7 +418,7 @@ export const WorkspacesAndExtractionView: React.FC<WorkspacesAndExtractionViewPr
               </div>
 
               <div className="flex items-center justify-between text-xs font-mono text-neutral-500 pt-2 border-t border-neutral-800">
-                <span>Cible Matérielle : <strong>ADSP-BF533 (Blackfin)</strong></span>
+                <span>Cible Matérielle : <strong>ADSP-BF524 (Blackfin)</strong></span>
                 <span className="text-emerald-400">✓ Encodage UTF-8 / Sans Risque Flash</span>
               </div>
             </div>

@@ -69,7 +69,7 @@ npm run dev`;
                 </span>
               </div>
               <p className="text-xs text-neutral-400">
-                Guide complet du projet, intention d'ingénierie, stack communautaire et spécifications Blackfin ADSP-BF533.
+                Guide complet du projet, intention d'ingénierie, stack communautaire et spécifications Blackfin ADSP-BF524.
               </p>
             </div>
           </div>
@@ -148,7 +148,7 @@ npm run dev`;
                   <span>Intention Fondatrice de l'Outil</span>
                 </div>
                 <p className="text-neutral-300">
-                  L'OP-1 Original repose sur un DSP Analog Devices Blackfin ADSP-BF533 cadencé à 400 MHz. Jusqu'à présent, sa modification nécessitait de manipuler une mosaïque de scripts Python dispersés en ligne de commande (dépaqueteurs LZMA, convertisseurs SVG binaires, extracteurs SQLite). 
+                  L'OP-1 Original repose sur un DSP Analog Devices Blackfin ADSP-BF524 cadencé à 400 MHz. Jusqu'à présent, sa modification nécessitait de manipuler une mosaïque de scripts Python dispersés en ligne de commande (dépaqueteurs LZMA, convertisseurs SVG binaires, extracteurs SQLite).
                   <strong> Az-OP-1 Engineering Studio</strong> unifie l'intégralité de cet écosystème au sein d'une station de travail graphique sécurisée, pédagogique et directement raccordée à un moteur de synthèse Web Audio à 20 oscillateurs et à un contrôleur matériel Web MIDI.
                 </p>
               </div>
@@ -161,7 +161,7 @@ npm run dev`;
                     <span>Vision Holistique</span>
                   </div>
                   <p className="text-neutral-400">
-                    Couvre l'intégralité du cycle de vie : de l'archivage cryptographique des 13 firmwares officiels (v061 à v246) à la création de moteurs DSP C++, au test sur émulateur et à la génération du binaire prêt à flasher.
+                    La priorité actuelle est l'émulation de l'OP-1 original. Les fonctions de modification et de flash restent hors du périmètre tant que le moteur BF524 n'est pas validé.
                   </p>
                 </div>
 
@@ -201,7 +201,7 @@ npm run dev`;
                     <span>UI/UX Hardware Dark</span>
                   </div>
                   <p className="text-neutral-400">
-                    Rendu OLED 320x240 fidèle, encodeurs 4 couleurs (Bleu, Vert, Blanc, Orange) et typographie monospacée calibrée pour les environnements de studio.
+                    Rendu OLED 320x160 fidèle, encodeurs 4 couleurs (Bleu, Vert, Blanc, Orange) et typographie monospacée calibrée pour les environnements de studio.
                   </p>
                 </div>
 
@@ -276,7 +276,7 @@ npm run dev`;
                       Court Terme
                     </span>
                     <ul className="text-neutral-400 space-y-1 text-[11px] list-disc list-inside">
-                      <li>Intégration d'op1emu en WebAssembly.</li>
+                      <li>Connexion du moteur QEMU Blackfin natif au cockpit web.</li>
                       <li>Sauvegarde et export des presets utilisateur.</li>
                       <li>Guide et documentation détaillée des 20 moteurs DSP.</li>
                     </ul>

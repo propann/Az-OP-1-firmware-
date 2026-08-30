@@ -344,6 +344,9 @@ export interface MidiMessageLog {
 }
 
 export interface MidiMappingConfig {
+  inputChannel: number;
+  matrixBaseNote: number;
+  matrixRoutingEnabled: boolean;
   blueKnobCC: number;
   greenKnobCC: number;
   whiteKnobCC: number;
@@ -389,5 +392,4 @@ export interface WorkspaceProject {
   tree: FirmwareFileNode[];
   auditReport?: WorkspaceAuditReport;
 }
-
 

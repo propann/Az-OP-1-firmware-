@@ -90,7 +90,7 @@ export const OledDisplay: React.FC<OledDisplayProps> = ({
 
       // Main Screen Content based on Mode
       if (isBooting) {
-        renderBootScreen(ctx, modState, bootProgress, bootMessage || 'INITIALISATION MATÉRIELLE ADSP-BF533...');
+        renderBootScreen(ctx, modState, bootProgress, bootMessage || 'INITIALISATION MATÉRIELLE ADSP-BF524...');
       } else if (mode === 'teboot') {
         renderTeBootScreen(ctx, modState);
       } else if (isEnvelopeTab) {
@@ -807,7 +807,7 @@ export const OledDisplay: React.FC<OledDisplayProps> = ({
       '1. FLASH FIRMWARE (op1_243.op1)',
       '2. VERIFY ANTI-BRICK CHECKSUM CRC32',
       '3. FORMAT INTERNAL FLASH MEMORY',
-      '4. RUN ADSP-BF533 DIAGNOSTICS',
+      '4. RUN ADSP-BF524 DIAGNOSTICS',
       '5. BOOT OP-1 RUNTIME'
     ];
 

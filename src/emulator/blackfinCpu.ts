@@ -1,6 +1,6 @@
 // ============================================================================
-// ANALOG DEVICES ADSP-BF533 BLACKFIN VIRTUAL PROCESSOR CORE
-// 16/32-Bit Dual-MAC RISC Engine with Hardware Loops & Circular Indexing
+// EXPERIMENTAL ANALOG DEVICES ADSP-BF524 BLACKFIN PROCESSOR SUBSET
+// Unsupported opcodes halt explicitly; they are never treated as successful NOPs.
 // ============================================================================
 
 import { MemoryBus } from './memoryBus';
@@ -421,7 +421,9 @@ export class BlackfinCpu {
       return 1;
     }
 
-    // Default: Fallback Step Next 16-bit instruction
+    if (this.breakOnIllegalOpcode) {
+      throw new Error(`Unsupported Blackfin opcode 0x${op.toString(16).padStart(4, '0').toUpperCase()}`);
+    }
     this.regs.pc = (pc + 2) >>> 0;
     return 1;
   }
@@ -512,7 +514,9 @@ export class BlackfinCpu {
       return 1;
     }
 
-    // Fallthrough for 32-bit instruction
+    if (this.breakOnIllegalOpcode) {
+      throw new Error(`Unsupported Blackfin 32-bit opcode 0x${op32.toString(16).padStart(8, '0').toUpperCase()}`);
+    }
     this.regs.pc = (pc + 4) >>> 0;
     return 1;
   }

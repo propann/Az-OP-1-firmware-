@@ -210,7 +210,7 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
             Émulateur & Pipeline
           </h2>
           <p className="text-[11px] text-zinc-400 mt-1 line-clamp-1">
-            op1emu 320x160 Live, Tests Anti-Brick & Repack
+            BF524 Lab 320x160 · moteur natif en construction
           </p>
         </button>
       </nav>

@@ -63,7 +63,7 @@ export const EngineeringLabModal: React.FC<EngineeringLabModalProps> = ({
   const [compileLog, setCompileLog] = useState<string>('');
   const [customEngineCode, setCustomEngineCode] = useState<string>(`// ============================================================================
 // OP-1 CUSTOM BLACKFIN DSP ENGINE: GRANULAR CLOUD SYNTH
-// Target Architecture: Analog Devices ADSP-BF533 (400 MHz DSP)
+// Target Architecture: Analog Devices ADSP-BF524 (400 MHz DSP)
 // Cycle Budget: Max 9070 cycles per sample @ 44.1 kHz
 // ============================================================================
 
@@ -165,7 +165,7 @@ fract32 process_sample_granular(GranularVoice* voice, const OP1Knobs* knobs, fra
 
   const handleCompileAndInjectDsp = () => {
     setIsCompilingDsp(true);
-    setCompileLog('[BLACKFIN-TOOLCHAIN] Invoking bfin-elf-g++ compiler...\n[OPTIMIZER] Target: Analog Devices ADSP-BF533 (-O3 -mfast-fp)\n');
+    setCompileLog('[BLACKFIN-TOOLCHAIN] Invoking bfin-elf-g++ compiler...\n[OPTIMIZER] Target: Analog Devices ADSP-BF524 (-O3 -mfast-fp)\n');
     
     setTimeout(() => {
       setCompileLog(prev => prev + '[ANALYSIS] Code size: 1,480 bytes in L1 Instruction SRAM.\n[PROFILER] Max cycles: 512 / 9070 per sample (5.6% DSP Load - SAFE).\n');
@@ -227,7 +227,7 @@ fract32 process_sample_granular(GranularVoice* voice, const OP1Knobs* knobs, fra
                 </span>
               </div>
               <p className="text-xs text-neutral-400">
-                Reverse-engineering, Blackfin ADSP-BF533 binary inspection, hook injection & C++ custom synth compiler
+                Reverse-engineering, Blackfin ADSP-BF524 binary inspection, hook injection & C++ custom synth compiler
               </p>
             </div>
           </div>
@@ -338,7 +338,7 @@ fract32 process_sample_granular(GranularVoice* voice, const OP1Knobs* knobs, fra
                       Rétro-Ingénierie & Hooks
                     </h3>
                     <p className="text-xs text-neutral-400 leading-relaxed">
-                      Désassemblage du binaire machine Blackfin ADSP-BF533 (.ldr), table d'injection de hooks DSP et contrôle mémoire pour éviter tout risque de brick.
+                      Désassemblage du binaire machine Blackfin ADSP-BF524 (.ldr), table d'injection de hooks DSP et contrôle mémoire pour éviter tout risque de brick.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-neutral-800 flex items-center justify-between text-[11px] font-mono text-purple-400">
@@ -385,7 +385,7 @@ fract32 process_sample_granular(GranularVoice* voice, const OP1Knobs* knobs, fra
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px]">
                   <div className="p-2 rounded bg-neutral-900/80 border border-neutral-800">
                     <span className="text-neutral-500 block">PROCESSEUR</span>
-                    <span className="text-white font-bold">Analog Devices BF533</span>
+                    <span className="text-white font-bold">Analog Devices BF524</span>
                   </div>
                   <div className="p-2 rounded bg-neutral-900/80 border border-neutral-800">
                     <span className="text-neutral-500 block">CADENCE DSP</span>
@@ -397,7 +397,7 @@ fract32 process_sample_granular(GranularVoice* voice, const OP1Knobs* knobs, fra
                   </div>
                   <div className="p-2 rounded bg-neutral-900/80 border border-neutral-800">
                     <span className="text-neutral-500 block">ÉCRAN OLED</span>
-                    <span className="text-purple-400 font-bold">320 × 240 AMOLED</span>
+                    <span className="text-purple-400 font-bold">320 × 160 AMOLED</span>
                   </div>
                 </div>
               </div>
@@ -551,7 +551,7 @@ fract32 process_sample_granular(GranularVoice* voice, const OP1Knobs* knobs, fra
                 <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3 font-mono text-xs">
                   <div className="flex items-center justify-between text-neutral-300 font-bold">
                     <span>OP1SVG - NORMALISATEUR DE GRAPHISMES VECTORIELS</span>
-                    <span className="text-purple-400">320 × 240 OLED</span>
+                    <span className="text-purple-400">320 × 160 OLED</span>
                   </div>
                   <p className="text-neutral-400 font-sans text-xs">
                     Normalise les coordonnées vectorielles SVG selon les contraintes de rendu du pilote OLED de l'OP-1 (anti-aliasing 2 bits, palette 4 couleurs TE).
@@ -570,7 +570,7 @@ fract32 process_sample_granular(GranularVoice* voice, const OP1Knobs* knobs, fra
             <div className="space-y-4">
               <div className="flex gap-2 border-b border-neutral-800 pb-3">
                 {[
-                  { id: 'disasm', name: 'Désassembleur ADSP-BF533', icon: Binary },
+                  { id: 'disasm', name: 'Désassembleur ADSP-BF524', icon: Binary },
                   { id: 'hooks', name: 'Table de Hooks DSP', icon: Sliders },
                   { id: 'memory', name: 'Cartographie Mémoire & Anti-Brick', icon: ShieldAlert },
                 ].map((sub) => (
@@ -596,7 +596,7 @@ fract32 process_sample_granular(GranularVoice* voice, const OP1Knobs* knobs, fra
                     <span className="text-green-400 font-bold">DÉCOMPILATION GHIDRA BLACKFIN ACTIVE</span>
                   </div>
                   <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 font-mono text-[11px] text-neutral-300 space-y-1.5 overflow-x-auto">
-                    <div className="text-neutral-500">// Blackfin Assembly Disassembly (ADSP-BF533 Core Architecture)</div>
+                    <div className="text-neutral-500">// Blackfin Assembly Disassembly (ADSP-BF524 Core Architecture)</div>
                     <div><span className="text-blue-400">0xFF801A40:</span>  <span className="text-purple-400">LINK 0x20;</span>                <span className="text-neutral-500">// Prologue: Allocate stack frame</span></div>
                     <div><span className="text-blue-400">0xFF801A44:</span>  <span className="text-purple-400">[--SP] = (R7:4, P5:3);</span>     <span className="text-neutral-500">// Push callee-saved registers</span></div>
                     <div><span className="text-blue-400">0xFF801A48:</span>  <span className="text-orange-400">R0 = [P0 + 0x04];</span>          <span className="text-neutral-500">// Load Knob 1 Blue (Frequency Offset)</span></div>
