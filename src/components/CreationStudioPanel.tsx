@@ -408,7 +408,7 @@ export const CreationStudioPanel: React.FC<CreationStudioPanelProps> = ({
               Catalogue des 20 Moteurs Audio Disponibles
             </h3>
             <p className="text-xs text-zinc-400 font-mono mt-0.5">
-              12 Moteurs d'Usine Teenage Engineering + 8 Nouveaux Moteurs DSP Moddés Blackfin ADSP-BF533.
+              12 Moteurs d'Usine Teenage Engineering + 8 Nouveaux Moteurs DSP Moddés Blackfin ADSP-BF524.
             </p>
           </div>
 

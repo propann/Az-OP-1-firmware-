@@ -132,7 +132,7 @@ export const INITIAL_WORKSPACE_FILE_TREE: FirmwareFileNode[] = [
         type: 'file',
         sizeBytes: 4194304,
         extension: 'ldr',
-        contentPreview: '[ADSP-BF533 Blackfin Loader Binary Block Header]\nTarget Arch: ADSP-BF533\nL1 SRAM Code Address: 0xFFA00000\nCRC32 Checksum: 0xA4F2C991'
+        contentPreview: '[ADSP-BF524 Blackfin Loader Binary Block Header]\nTarget Arch: ADSP-BF524\nL1 SRAM Code Address: 0xFFA00000\nCRC32 Checksum: 0xA4F2C991'
       }
     ]
   },
@@ -150,7 +150,7 @@ export const INITIAL_WORKSPACE_FILE_TREE: FirmwareFileNode[] = [
         type: 'file',
         sizeBytes: 14336,
         extension: 'txt',
-        contentPreview: `// ADSP-BF533 C++ DSP Hook: Granular Glitch Cloud
+        contentPreview: `// ADSP-BF524 C++ DSP Hook: Granular Glitch Cloud
 #include "op1_dsp_runtime.h"
 
 class GranularGlitchEngine : public IOP1DspEngine {
@@ -177,7 +177,7 @@ public:
         type: 'file',
         sizeBytes: 12288,
         extension: 'txt',
-        contentPreview: `// ADSP-BF533 C++ DSP Hook: MOS Technology 6581 SID Emulation
+        contentPreview: `// ADSP-BF524 C++ DSP Hook: MOS Technology 6581 SID Emulation
 #include "op1_dsp_runtime.h"
 
 class Sid6581Engine : public IOP1DspEngine {
@@ -229,7 +229,7 @@ export const INITIAL_AUDIT_REPORT: WorkspaceAuditReport = {
       details: 'Le flux compressé décompresse avec 0 erreur. Le CRC32 correspond au descripteur TE.'
     },
     {
-      title: 'Test Banc d\'Émulation op1emu (320x160 OLED @ 60 FPS)',
+      title: 'Test Banc d\'Émulation bf524-lab (320x160 OLED @ 60 FPS)',
       passed: true,
       details: 'Émulation réussie à 60 FPS avec 100% de conformité audio et aucun artefact graphique.'
     }

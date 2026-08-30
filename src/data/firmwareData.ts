@@ -153,7 +153,7 @@ export const OFFICIAL_FIRMWARES: OfficialFirmwareInfo[] = [
     features: [
       'Arpeggiator Sequencer Introduction',
       'Pocket Operator Audio-Sync Mode (PO-Sync)',
-      'ADSP-BF533 Memory Optimization'
+      'ADSP-BF524 Memory Optimization'
     ]
   },
   {
@@ -300,7 +300,7 @@ export const PYTHON_DEV_STACK_TOOLS: PythonDevToolDef[] = [
     name: 'parse_bfin_ldr.py & find_bfin_immediates',
     command: 'parse_bfin_ldr.py',
     installCommand: 'python3 -m pip install capstone',
-    description: 'Scripts de rétro-ingénierie Blackfin ADSP-BF533 pour extraire les blocs de chargement LDR, analyser les en-têtes de boot et localiser les tables de constantes et d\'adresses immédiates.',
+    description: 'Scripts de rétro-ingénierie Blackfin ADSP-BF524 pour extraire les blocs de chargement LDR, analyser les en-têtes de boot et localiser les tables de constantes et d\'adresses immédiates.',
     category: 'disasm',
     exampleUsage: 'python3 parse_bfin_ldr.py firmware.ldr --show-blocks --dump-l1-sram'
   }
@@ -471,7 +471,7 @@ export const INITIAL_FIRMWARE_FILESYSTEM: FirmwareFileNode = {
           type: 'file',
           sizeBytes: 6420000,
           extension: 'ldr',
-          contentPreview: `[Analog Devices Blackfin ADSP-BF533 Bootloader Stream]\nHeader: 0xAD50BF53\nTarget: BF533 (Silicon Rev 0.6)\nEntryPoint: 0xFFA00000 (L1 Instruction SRAM)\nSection Count: 14`
+          contentPreview: `[Analog Devices Blackfin ADSP-BF524 Bootloader Stream]\nHeader: 0xAD50BF53\nTarget: BF524 (Silicon Rev 0.6)\nEntryPoint: 0xFFA00000 (L1 Instruction SRAM)\nSection Count: 14`
         },
         {
           id: 'file-version-info',
@@ -732,7 +732,7 @@ export const DSP_ENGINES_CATALOG: CustomDspEngineDefinition[] = [
     description: 'Continuous circular grain stream with asynchronous randomized micro-envelopes, variable grain pitch jitter, and spatial diffusion.',
     hookTargetSymbol: '_dsp_custom_granular',
     romOffsetHex: '0x002B4910',
-    codeCpp: `// Granular Cloud Synthesizer (ADSP-BF533 L1 SRAM Optimized)\n#pragma section("L1_code")\nvoid dsp_granular_tick(GranularState* state, float* buffer, int len) {\n  for(int n=0; n<len; n++) {\n    float grainAcc = 0.0f;\n    for(int g=0; g<8; g++) {\n      if(state->grains[g].active) {\n        grainAcc += sample_grain(&state->grains[g]);\n      }\n    }\n    buffer[n] = grainAcc * 0.35f;\n  }\n}`,
+    codeCpp: `// Granular Cloud Synthesizer (ADSP-BF524 L1 SRAM Optimized)\n#pragma section("L1_code")\nvoid dsp_granular_tick(GranularState* state, float* buffer, int len) {\n  for(int n=0; n<len; n++) {\n    float grainAcc = 0.0f;\n    for(int g=0; g<8; g++) {\n      if(state->grains[g].active) {\n        grainAcc += sample_grain(&state->grains[g]);\n      }\n    }\n    buffer[n] = grainAcc * 0.35f;\n  }\n}`,
     knobBlueLabel: 'Grain Density (20-100Hz)',
     knobGreenLabel: 'Pitch Spray / Detune',
     knobWhiteLabel: 'Formant Bandpass',
@@ -1109,7 +1109,7 @@ export const BLACKFIN_HOOKS_DATA: BlackfinHook[] = [
 
 export const INITIAL_BUILD_LOGS = [
   { id: 'log-1', timestamp: '14:02:11', level: 'INFO' as const, message: '[op1repacker v2.4] Initializing OP-1 Firmware Repack Suite...' },
-  { id: 'log-2', timestamp: '14:02:12', level: 'INFO' as const, message: 'Detected container: TAR with LZMA Level 9 compression (Format standard: ADSP-BF533)' },
+  { id: 'log-2', timestamp: '14:02:12', level: 'INFO' as const, message: 'Detected container: TAR with LZMA Level 9 compression (Format standard: ADSP-BF524)' },
   { id: 'log-3', timestamp: '14:02:13', level: 'SUCCESS' as const, message: 'SHA-256 Validated: 9f83a21b4c5e6d7890123456789abcdef0123456789abcdef0123456789abcde' },
   { id: 'log-4', timestamp: '14:02:14', level: 'PATCH' as const, message: '[Mod: iter] Unlocking hidden ITER synthesis engine in system/OP1_factory.db' },
   { id: 'log-5', timestamp: '14:02:15', level: 'PATCH' as const, message: '[Mod: filter] Patching FX dispatch table: Unlocking Master Filter & Subtle-FX' },

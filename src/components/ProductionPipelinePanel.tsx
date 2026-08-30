@@ -34,7 +34,7 @@ interface ProductionPipelinePanelProps {
   onOpenHardware: () => void;
 }
 
-type PipelineSubView = 'repacker' | 'op1emu' | 'testbench' | 'usb-flash';
+type PipelineSubView = 'repacker' | 'bf524-lab' | 'testbench' | 'usb-flash';
 
 export const ProductionPipelinePanel: React.FC<ProductionPipelinePanelProps> = ({
   modState,
@@ -85,7 +85,7 @@ export const ProductionPipelinePanel: React.FC<ProductionPipelinePanelProps> = (
       id: 'tc-1',
       name: 'Blackfin DSP Audio Cycle Budget Check',
       category: 'DSP',
-      description: 'Vérifie que la charge par échantillon reste sous le budget strict de 9070 cycles à 44.1 kHz (ADSP-BF533 @ 400 MHz).',
+      description: 'Vérifie que la charge par échantillon reste sous le budget strict de 9070 cycles à 44.1 kHz (ADSP-BF524 @ 400 MHz).',
       status: 'PASSED',
       durationMs: 42,
       detail: 'Peak measured: 4,320 cycles (47.6% load). Headroom: 4,750 cycles.'
@@ -134,7 +134,7 @@ export const ProductionPipelinePanel: React.FC<ProductionPipelinePanelProps> = (
       id: 'log-1',
       timestamp: '14:20:01',
       level: 'INFO',
-      message: 'Initialisation du pipeline Engineering Studio v2.4 (ADSP-BF533 Target)...'
+      message: 'Initialisation du pipeline Engineering Studio v2.4 (ADSP-BF524 Target)...'
     },
     {
       id: 'log-2',
@@ -152,7 +152,7 @@ export const ProductionPipelinePanel: React.FC<ProductionPipelinePanelProps> = (
       id: 'log-4',
       timestamp: '14:20:04',
       level: 'SUCCESS',
-      message: 'Prêt pour l\'exécution du build ou le test sur op1emu.'
+      message: 'Prêt pour l\'exécution du build ou le test sur bf524-lab.'
     }
   ]);
 
@@ -237,7 +237,7 @@ export const ProductionPipelinePanel: React.FC<ProductionPipelinePanelProps> = (
   const handleRunAllTests = () => {
     setIsRunningAllTests(true);
     audioEngine.playChime('save');
-    addLog('INFO', 'Lancement de la suite de tests de régression automatisée sur op1emu...');
+    addLog('INFO', 'Lancement de la suite de tests de régression automatisée sur bf524-lab...');
 
     setTestCases(prev => prev.map(t => ({ ...t, status: 'RUNNING' })));
 
@@ -288,7 +288,7 @@ export const ProductionPipelinePanel: React.FC<ProductionPipelinePanelProps> = (
   };
 
   const handleDownloadFirmware = () => {
-    const payload = `TEENAGE ENGINEERING OP-1 CUSTOM FIRMWARE\nBuilt by Engineering Studio\nBase Version: ${modState.baseVersion}\nTarget: ADSP-BF533\nCRC32: 0xA4F2C991\nITER Synth: ${modState.unlockIterSynth ? 'Active' : 'Disabled'}\nFilter FX: ${modState.unlockFilterEffect ? 'Active' : 'Disabled'}`;
+    const payload = `TEENAGE ENGINEERING OP-1 CUSTOM FIRMWARE\nBuilt by Engineering Studio\nBase Version: ${modState.baseVersion}\nTarget: ADSP-BF524\nCRC32: 0xA4F2C991\nITER Synth: ${modState.unlockIterSynth ? 'Active' : 'Disabled'}\nFilter FX: ${modState.unlockFilterEffect ? 'Active' : 'Disabled'}`;
     const blob = new Blob([payload], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -328,10 +328,10 @@ export const ProductionPipelinePanel: React.FC<ProductionPipelinePanelProps> = (
               Phase 4 : Émulateur & Chaîne de Test
             </span>
             <h2 className="text-2xl font-bold font-mono text-zinc-100">
-              L'Environnement de Test Idéal (op1emu & Reconditionnement)
+              Laboratoire BF524 · analyse et instrumentation
             </h2>
             <p className="text-xs text-zinc-400 font-mono max-w-3xl">
-              Exécutez vos firmwares modifiés en toute sécurité dans l'émulateur virtuel <code className="text-cyan-300 font-mono">op1emu</code>, observez les registres du Blackfin ADSP-BF533 en temps réel, exécutez la suite de tests automatisée anti-brick et reconditionnez votre binaire .op1 officiel prêt à flasher.
+              Analysez les firmwares dans <code className="text-cyan-300 font-mono">bf524-lab</code> et observez le cœur expérimental. Le démarrage fiable d'un firmware réel dépend du moteur QEMU natif et des périphériques BF524 encore à implémenter.
             </p>
           </div>
 
@@ -376,15 +376,15 @@ export const ProductionPipelinePanel: React.FC<ProductionPipelinePanelProps> = (
       <div className="flex flex-wrap items-center justify-between gap-3 p-2 bg-zinc-900/90 rounded-xl border border-zinc-800">
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => setSubView('op1emu')}
+            onClick={() => setSubView('bf524-lab')}
             className={`px-4 py-2 rounded-lg text-xs font-mono font-bold flex items-center gap-2 transition cursor-pointer ${
-              subView === 'op1emu'
+              subView === 'bf524-lab'
                 ? 'bg-cyan-600 text-white shadow-md shadow-cyan-900/30'
                 : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
             }`}
           >
             <Cpu className="w-4 h-4 text-cyan-300" />
-            Émulateur Virtuel (op1emu Live)
+            Cœur expérimental (BF524 Lab)
           </button>
 
           <button
@@ -434,7 +434,7 @@ export const ProductionPipelinePanel: React.FC<ProductionPipelinePanelProps> = (
       </div>
 
       {/* SUBVIEW 1: OP1EMU VIRTUAL EMULATOR */}
-      {subView === 'op1emu' && (
+      {subView === 'bf524-lab' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left: Virtual Screen & Interactive Mini-Keys */}
           <div className="lg:col-span-7 bg-zinc-950 border border-zinc-800 rounded-xl p-5 shadow-2xl space-y-4">
@@ -442,7 +442,7 @@ export const ProductionPipelinePanel: React.FC<ProductionPipelinePanelProps> = (
               <div className="flex items-center gap-2">
                 <Cpu className="w-4 h-4 text-cyan-400" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-200 font-mono">
-                  op1emu Screen Output (320 × 160 px OLED)
+                  Sortie diagnostic 320 × 160
                 </h3>
               </div>
 
@@ -542,12 +542,12 @@ export const ProductionPipelinePanel: React.FC<ProductionPipelinePanelProps> = (
             </div>
           </div>
 
-          {/* Right: Blackfin ADSP-BF533 CPU Registers & Telemetry */}
+          {/* Right: Blackfin ADSP-BF524 CPU Registers & Telemetry */}
           <div className="lg:col-span-5 bg-zinc-900 border border-zinc-800 rounded-xl p-5 shadow-lg space-y-4">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-200 font-mono flex items-center gap-2">
                 <Gauge className="w-4 h-4 text-cyan-400" />
-                Registres ADSP-BF533 (400 MHz)
+                Registres ADSP-BF524 (400 MHz)
               </h3>
               <span className="text-[11px] font-mono text-cyan-400">
                 DSP: {registers.dspLoadPercent}%
@@ -633,7 +633,7 @@ export const ProductionPipelinePanel: React.FC<ProductionPipelinePanelProps> = (
                 Banc de Tests & Validation Anti-Brick Automatisée
               </h3>
               <p className="text-xs text-zinc-400 font-mono">
-                Exécution en bac à sable virtuel sur op1emu avant tout déploiement sur matériel physique.
+                Analyse locale uniquement : aucun résultat de ce panneau n'autorise un flash matériel.
               </p>
             </div>
 

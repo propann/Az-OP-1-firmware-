@@ -188,7 +188,7 @@ export const FirmwareManagerPanel: React.FC<FirmwareManagerPanelProps> = ({
   };
 
   const handleDownloadFw = (fw: OfficialFirmwareInfo) => {
-    const payload = `TEENAGE ENGINEERING OP-1 FIRMWARE BINARY\nVersion: ${fw.version}\nFile: ${fw.fileName}\nTarget: ADSP-BF533 (Blackfin)\nBootloader: ${fw.bootloaderVer}\nCRC32: 0x${fw.crc32}\nSHA-256: ${fw.sha256}`;
+    const payload = `TEENAGE ENGINEERING OP-1 FIRMWARE BINARY\nVersion: ${fw.version}\nFile: ${fw.fileName}\nTarget: ADSP-BF524 (Blackfin)\nBootloader: ${fw.bootloaderVer}\nCRC32: 0x${fw.crc32}\nSHA-256: ${fw.sha256}`;
     const blob = new Blob([payload], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -248,7 +248,7 @@ export const FirmwareManagerPanel: React.FC<FirmwareManagerPanelProps> = ({
       } else if (cmd.includes('decrypt')) {
         lines.push('[op1-decryptor] Loading AES-256 OTP Key (0x9C2B88FF...)');
         lines.push('Decrypting section OP1_vdk.ldr.enc...');
-        lines.push('Validating Blackfin ADSP-BF533 binary header: 0xAD50BF53');
+        lines.push('Validating Blackfin ADSP-BF524 binary header: 0xAD50BF53');
         lines.push('Decryption SUCCESS: Output saved to OP1_vdk.ldr.dec');
       } else if (cmd.includes('parse_bfin_ldr')) {
         lines.push('[parse_bfin_ldr.py] Reading Blackfin LDR stream...');
@@ -283,7 +283,7 @@ export const FirmwareManagerPanel: React.FC<FirmwareManagerPanelProps> = ({
                 13 Firmwares Officiels OP-1 Original
               </span>
               <span className="text-xs text-zinc-400 font-mono hidden sm:inline">
-                Target: ADSP-BF533 (Non-Field)
+                Target: ADSP-BF524 (Non-Field)
               </span>
             </div>
             <h1 className="text-2xl font-bold text-zinc-100 tracking-tight font-mono">
@@ -794,7 +794,7 @@ export const FirmwareManagerPanel: React.FC<FirmwareManagerPanelProps> = ({
               {/* Terminal Output Window */}
               <div className="flex-1 bg-black rounded-lg p-4 font-mono text-xs overflow-y-auto space-y-1.5 border border-zinc-900 text-zinc-300">
                 <div className="text-zinc-400">
-                  Engineering Studio Python Rack v2.4 (ADSP-BF533 Toolchain)
+                  Engineering Studio Python Rack v2.4 (ADSP-BF524 Toolchain)
                 </div>
                 <div className="text-zinc-400">
                   Tapez une commande ou cliquez sur les suggestions ci-dessus.

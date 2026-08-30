@@ -1,0 +1,123 @@
+diff --git a/hw/bfin/bfin_boards.c b/hw/bfin/bfin_boards.c
+index 157f132..c0fd2ef 100644
+--- a/hw/bfin/bfin_boards.c
++++ b/hw/bfin/bfin_boards.c
+@@ -29,6 +29,20 @@ struct bfin_memory_layout {
+ };
+ #define LAYOUT(_addr, _len, _name) { .addr = _addr, .len = _len, .name = _name, }
+ 
++#define OP1_LDR_FILL  0x00000100
++#define OP1_LDR_IGNORE 0x00001000
++#define OP1_LDR_FINAL 0x00008000
++#define OP1_LDR_SIGNATURE 0xAD000000
++
++static const struct bfin_memory_layout op1_bf524_mem[] =
++{
++    LAYOUT(0xFF800000, 0x8000, "BF524 L1 Data A"),
++    LAYOUT(0xFF900000, 0x8000, "BF524 L1 Data B"),
++    LAYOUT(0xFFA00000, 0x10000, "BF524 L1 Instruction"),
++    LAYOUT(0xFFB00000, 0x1000, "BF524 Scratchpad"),
++    LAYOUT(0, 0, "OP-1 SDRAM"),
++};
++
+ static const struct bfin_memory_layout bf537_mem[] =
+ {
+     LAYOUT(0xFF800000, 0x4000, "L1 Data A"),
+@@ -135,6 +149,96 @@ static void bfin_common_init(const struct bfin_memory_layout mem_layout[],
+     }
+ }
+ 
++static bool op1_load_bf52x_ldr(const char *filename, CPUArchState *env,
++                               Error **errp)
++{
++    g_autofree gchar *data = NULL;
++    gsize size = 0;
++    size_t off = 0;
++
++    if (!g_file_get_contents(filename, &data, &size, NULL)) {
++        error_setg(errp, "cannot read OP-1 LDR '%s'", filename);
++        return false;
++    }
++
++    while (off + 16 <= size) {
++        const uint8_t *header = (const uint8_t *)data + off;
++        uint32_t code = ldl_le_p(header);
++        uint32_t target = ldl_le_p(header + 4);
++        uint32_t count = ldl_le_p(header + 8);
++        uint32_t argument = ldl_le_p(header + 12);
++        uint8_t checksum = 0;
++        int i;
++
++        for (i = 0; i < 16; ++i) {
++            checksum ^= header[i];
++        }
++        if ((code & 0xFF000000) != OP1_LDR_SIGNATURE || checksum != 0) {
++            error_setg(errp, "invalid BF52x LDR header at offset 0x%zx", off);
++            return false;
++        }
++        off += 16;
++
++        if (code & OP1_LDR_FINAL) {
++            env->pc = target;
++            return true;
++        }
++        if (code & OP1_LDR_FILL) {
++            g_autofree uint8_t *fill = g_malloc(count);
++            memset(fill, argument & 0xff, count);
++            if (address_space_write(&address_space_memory, target,
++                                    MEMTXATTRS_UNSPECIFIED, fill, count) != MEMTX_OK) {
++                error_setg(errp, "cannot fill LDR block at 0x%08x", target);
++                return false;
++            }
++            continue;
++        }
++        if (off + count > size) {
++            error_setg(errp, "truncated BF52x LDR payload at offset 0x%zx", off);
++            return false;
++        }
++        if (!(code & OP1_LDR_IGNORE) &&
++            address_space_write(&address_space_memory, target,
++                                MEMTXATTRS_UNSPECIFIED,
++                                (const uint8_t *)data + off, count) != MEMTX_OK) {
++            error_setg(errp, "cannot load LDR block at 0x%08x", target);
++            return false;
++        }
++        off += count;
++    }
++
++    error_setg(errp, "BF52x LDR has no FINAL block");
++    return false;
++}
++
++static void op1_bf524_init(MachineState *machine)
++{
++    CPUState *cs;
++    BlackfinCPU *cpu;
++
++    bfin_common_init(op1_bf524_mem, machine);
++    if (!machine->kernel_filename) {
++        error_report("op1-bf524 requires -kernel path/to/file.ldr");
++        exit(1);
++    }
++    cs = first_cpu;
++    cpu = BFIN_CPU(cs);
++    if (!op1_load_bf52x_ldr(machine->kernel_filename, &cpu->env, &error_fatal)) {
++        exit(1);
++    }
++}
++
++static void op1_bf524_machine_init(MachineClass *mc)
++{
++    mc->desc = "Teenage Engineering OP-1 research machine (ADSP-BF524)";
++    mc->init = op1_bf524_init;
++    mc->max_cpus = 1;
++    mc->default_cpu_type = BLACKFIN_CPU_TYPE_NAME("bf524");
++    mc->default_ram_size = 64 * MiB;
++    mc->default_ram_id = "op1.ram";
++}
++DEFINE_MACHINE("op1-bf524", op1_bf524_machine_init)
++
+ static void bf537_stamp_init(MachineState *machine)
+ {
+     bfin_common_init(bf537_mem, machine);
+

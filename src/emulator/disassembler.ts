@@ -1,5 +1,5 @@
 // ============================================================================
-// BLACKFIN ADSP-BF533 INSTRUCTION DISASSEMBLER
+// BLACKFIN ADSP-BF524 INSTRUCTION DISASSEMBLER
 // Decodes 16-bit and 32-bit machine code into standard Blackfin Assembly
 // ============================================================================
 

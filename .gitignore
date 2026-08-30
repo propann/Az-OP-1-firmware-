@@ -1,0 +1,10 @@
+node_modules/
+dist/
+__pycache__/
+.cache/
+*.op1
+*.ldr
+*.bin
+*.zip
+firmware/
+corpus/

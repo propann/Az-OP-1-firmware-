@@ -1,6 +1,6 @@
 // ============================================================================
-// BLACKFIN ADSP-BF533 VIRTUAL MEMORY BUS (MMU / PERIPHERAL MAP)
-// Emulates the 32-bit physical address space of Analog Devices ADSP-BF533
+// BLACKFIN ADSP-BF524 VIRTUAL MEMORY BUS (MMU / PERIPHERAL MAP)
+// Emulates the 32-bit physical address space of Analog Devices ADSP-BF524
 // ============================================================================
 
 export interface MemoryRange {
@@ -58,14 +58,14 @@ export class MemoryBus {
   }
 
   private initDefaultMmr() {
-    // Initialize standard ADSP-BF533 System Control Registers
+    // Initialize standard ADSP-BF524 System Control Registers
     this.write32(0xFFC00000, 0x00000000); // PLL_CTL (500MHz VCO)
     this.write32(0xFFC00004, 0x00000005); // PLL_DIV (CCLK = 400MHz, SCLK = 100MHz)
     this.write32(0xFFC00014, 0x00000001); // VR_CTL (Core Voltage Regulator 1.2V)
     this.write32(0xFFC00100, 0x00000000); // SIC_ISR (Interrupt Status)
     this.write32(0xFFC00104, 0x00000000); // SIC_IWR (Wakeup Enable)
     this.write32(0xFFC00108, 0x00000000); // SIC_IMASK (Interrupt Mask)
-    this.write32(0xFFC00400, 0x00000000); // PPI_CONTROL (OLED 320x240 Display Port)
+    this.write32(0xFFC00400, 0x00000000); // PPI_CONTROL (OLED 320x160 Display Port)
     this.write32(0xFFC00800, 0x00000000); // SPORT0_TCR1 (Audio TX Config)
     this.write32(0xFFC00804, 0x00000000); // SPORT0_TCR2 (Audio 24-bit Stereo)
     this.write32(0xFFC00808, 0x00000000); // SPORT0_TCLKDIV (44.1kHz Audio Clock)

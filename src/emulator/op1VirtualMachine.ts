@@ -1,6 +1,6 @@
 // ============================================================================
-// OP-1 BLACKFIN ADSP-BF533 VIRTUAL MACHINE ENGINE
-// Full-Stack Hardware Virtualizer & Firmware Execution Coordinator
+// OP-1 ADSP-BF524 experimental execution core.
+// This is intentionally not presented as a complete hardware emulator.
 // ============================================================================
 
 import { MemoryBus } from './memoryBus';
@@ -58,14 +58,14 @@ export class OP1VirtualMachine {
     this.peripherals = new HardwarePeripherals(this.bus, this.cpu);
     this.disassembler = new BlackfinDisassembler();
 
-    // Load factory firmware binary on startup
+    // Load a tiny specification-shaped diagnostic LDR on startup.
     this.loadFactoryFirmware('243', false);
   }
 
-  // Load a built-in firmware binary (e.g. #243, #242, #218, or modded Iter)
+  // Backwards-compatible UI action. No proprietary factory firmware is bundled.
   public loadFactoryFirmware(version: string = '243', isModded: boolean = false): boolean {
-    const rawBinary = LdrParser.createFactoryFirmwareBinary(version, isModded);
-    return this.loadFirmwareBinary(rawBinary, `op1_factory_${version}${isModded ? '_mod' : ''}.op1`);
+    const rawBinary = LdrParser.createDiagnosticLdr();
+    return this.loadFirmwareBinary(rawBinary, `diagnostic_bf524_${version}${isModded ? '_mod-requested' : ''}.ldr`);
   }
 
   // Load an uploaded or generated .op1 / .ldr firmware binary
@@ -75,9 +75,12 @@ export class OP1VirtualMachine {
 
     try {
       const parsed = LdrParser.parse(binary, filename);
+      if (!parsed.isExecutableByExperimentalCore) {
+        throw new Error(parsed.error || 'Ce fichier est analysable mais pas directement exécutable par le cœur expérimental.');
+      }
       this.loadedFirmware = parsed;
 
-      const { entryPoint, loadedBytes } = LdrParser.loadIntoMemory(binary, this.bus);
+      const { entryPoint } = LdrParser.loadIntoMemory(binary, this.bus, filename);
       this.cpu.reset(entryPoint);
 
       this.isBooted = true;
