@@ -55,6 +55,22 @@ npm run dev
 
 Node.js 18 ou plus récent est requis.
 
+## Laboratoire firmware
+
+La commande unifiée fonctionne avec Python 3.10+ sans paquet externe :
+
+~~~bash
+python3 tools/op1lab.py inspect mon-firmware.op1
+python3 tools/op1lab.py unpack mon-firmware.op1 -o firmware/extrait
+python3 tools/op1lab.py repack firmware/extrait -o firmware/reconstruit.op1
+python3 tools/op1lab.py compare firmware/version-a firmware/version-b
+python3 tools/op1lab.py corpus corpus -o firmware/corpus-index.json
+~~~
+
+Elle refuse les chemins TAR dangereux, valide le repack après construction et
+n'écrase jamais une destination existante. Voir `docs/TOOLCHAIN.md` pour la
+boîte à outils et `docs/DEVELOPER_GUIDE.md` pour intervenir sur le projet.
+
 ## Architecture cible
 
 1. Conserver l’analyseur web comme banc de contrôle déterministe.
@@ -63,7 +79,8 @@ Node.js 18 ou plus récent est requis.
 4. Implémenter les périphériques depuis des traces et documents vérifiables.
 5. Valider le boot par tests différentiels avec des fichiers fournis localement.
 
-Voir [docs/EMULATION_STATUS.md](docs/EMULATION_STATUS.md) pour les critères.
+Voir [docs/ROADMAP.md](docs/ROADMAP.md) pour le plan précis et
+[docs/EMULATION_STATUS.md](docs/EMULATION_STATUS.md) pour les critères.
 
 ## Sécurité
 

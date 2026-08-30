@@ -18,6 +18,7 @@ import { OFFICIAL_FIRMWARES } from './data/firmwareData';
 import { OledDisplay } from './components/OledDisplay';
 import { KnobControl } from './components/KnobControl';
 import { Keyboard } from './components/Keyboard';
+import { MidiControllerBar } from './components/MidiControllerBar';
 import { OP1Button } from './components/OP1Button';
 import { webMidi } from './midi/midiManager';
 import { ModularDashboard } from './components/ModularDashboard';
@@ -228,6 +229,9 @@ export const App: React.FC = () => {
           }),
           webMidi.onPitchBend((bendVal) => {
             audioEngine.setPitchBend(bendVal * 2);
+          }),
+          webMidi.onMatrixKey((keyIndex, pressed) => {
+            op1Vm.peripherals.setKey(keyIndex, pressed);
           })
         );
       }
@@ -890,13 +894,15 @@ export const App: React.FC = () => {
 
           {/* BOTTOM SECTION: 24 CIRCULAR KEYS BED (AUTHENTIC TEENAGE ENGINEERING KEYBED) */}
           <section className="pt-1">
+            <MidiControllerBar />
             <Keyboard
               onNoteOn={handleNoteOn}
               onNoteOff={handleNoteOff}
               activeNotes={activeMidiNotes}
               octave={octave}
               onOctaveChange={setOctave}
-              onPitchBend={(_semi) => {}}
+              onPitchBend={(semitones) => audioEngine.setPitchBend(semitones)}
+              onKeyMatrixChange={(keyIndex, pressed) => op1Vm.peripherals.setKey(keyIndex, pressed)}
             />
           </section>
         </main>

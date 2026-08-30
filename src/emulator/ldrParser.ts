@@ -112,7 +112,9 @@ export class LdrParser {
       }
       lzmaUncompressedSize = unknown ? null : size;
     }
-    if (lzmaProperties !== 0x5d) errors.push('En-tête LZMA-Alone inattendu.');
+    // LZMA-Alone accepte plusieurs jeux (pb, lp, lc). 0x5D est courant dans
+    // les originaux; les paramètres publics d'op1repacker produisent 0x66.
+    if (lzmaProperties >= 9 * 5 * 5) errors.push('Propriétés LZMA-Alone invalides.');
 
     return {
       filename, format: 'op1-container', totalSize: data.length, entryPoint: 0,
