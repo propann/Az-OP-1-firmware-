@@ -201,11 +201,117 @@ export class LdrParser {
   }
 
   public static createDiagnosticLdr(): Uint8Array {
-    const code = new Uint8Array([0x00, 0x00]);
+    // Basic NOP + ALU register test routine
+    const code = new Uint8Array([
+      0x00, 0x00,             // NOP
+      0x00, 0xE1, 0x24, 0x00, // R0 = 0x0024
+      0x01, 0xE1, 0x43, 0x00, // R1 = 0x0043
+      0x08, 0x50,             // R0 = R0 + R1
+      0x00, 0x00              // NOP
+    ]);
     const output = new Uint8Array(16 + code.length + 16);
     this.writeAdiHeader(output, 0, BF52X_LDR_FLAGS.HEADER_SIGNATURE | BF52X_LDR_FLAGS.FIRST, 0x1000, code.length, 0);
     output.set(code, 16);
     this.writeAdiHeader(output, 16 + code.length, BF52X_LDR_FLAGS.HEADER_SIGNATURE | BF52X_LDR_FLAGS.FINAL, 0x1000, 0, 0);
+    return output;
+  }
+
+  public static createTeBootVectorLdr(): Uint8Array {
+    // TE-BOOT Bootloader & Key Matrix test routine
+    const code = new Uint8Array([
+      0x00, 0x00,             // NOP
+      0x00, 0xE1, 0x00, 0x15, // R0 = 0x1500 (C8051 Matrix MMR offset)
+      0x01, 0xE1, 0xC0, 0xFF, // R1 = 0xFFC0 (MMR Base)
+      0x00, 0x00              // NOP
+    ]);
+    const output = new Uint8Array(16 + code.length + 16);
+    this.writeAdiHeader(output, 0, BF52X_LDR_FLAGS.HEADER_SIGNATURE | BF52X_LDR_FLAGS.FIRST, 0x1000, code.length, 0);
+    output.set(code, 16);
+    this.writeAdiHeader(output, 16 + code.length, BF52X_LDR_FLAGS.HEADER_SIGNATURE | BF52X_LDR_FLAGS.FINAL, 0x1000, 0, 0);
+    return output;
+  }
+
+  public static createSport0AudioDmaLdr(): Uint8Array {
+    // SPORT0 DMA Audio Codec 44.1kHz test routine
+    const code = new Uint8Array([
+      0x00, 0x00,             // NOP
+      0x00, 0xE1, 0x10, 0x08, // R0 = 0x0810 (SPORT0 TX MMR)
+      0x01, 0xE1, 0xC0, 0xFF, // R1 = 0xFFC0 (MMR Base)
+      0x00, 0x00              // NOP
+    ]);
+    const output = new Uint8Array(16 + code.length + 16);
+    this.writeAdiHeader(output, 0, BF52X_LDR_FLAGS.HEADER_SIGNATURE | BF52X_LDR_FLAGS.FIRST, 0x1000, code.length, 0);
+    output.set(code, 16);
+    this.writeAdiHeader(output, 16 + code.length, BF52X_LDR_FLAGS.HEADER_SIGNATURE | BF52X_LDR_FLAGS.FINAL, 0x1000, 0, 0);
+    return output;
+  }
+
+  public static createPpiFramebufferLdr(): Uint8Array {
+    // 1. Code Block: Routine that configures PPI DMA MMRs
+    const code = new Uint8Array([
+      0x00, 0x00,             // NOP
+      0x00, 0xE1, 0x00, 0x04, // R0 = 0x0400 (PPI Control MMR)
+      0x01, 0xE1, 0xC0, 0xFF, // R1 = 0xFFC0 (MMR Base)
+      0x00, 0x00              // NOP
+    ]);
+
+    // 2. Video Framebuffer Block: 320x160 RGB565 pixel pattern loaded directly at 0x00010000 (SDRAM)
+    const fbBytes = new Uint8Array(320 * 160 * 2);
+    let offset = 0;
+    for (let y = 0; y < 160; y++) {
+      for (let x = 0; x < 320; x++) {
+        let rgb565 = 0x0000;
+        // Top status bar (y < 20)
+        if (y < 20) {
+          rgb565 = 0x18E3; // Dark slate
+        } else if (y === 20 || y === 140) {
+          rgb565 = 0x3DEF; // Cyan border line
+        } else if (y > 20 && y < 140) {
+          // Color bars across X
+          const bar = Math.floor(x / 40);
+          switch (bar) {
+            case 0: rgb565 = 0xF800; break; // Red
+            case 1: rgb565 = 0x07E0; break; // Green
+            case 2: rgb565 = 0x001F; break; // Blue
+            case 3: rgb565 = 0xFFE0; break; // Yellow
+            case 4: rgb565 = 0x07FF; break; // Cyan
+            case 5: rgb565 = 0xF81F; break; // Magenta
+            case 6: rgb565 = 0xFFFF; break; // White
+            default: rgb565 = 0x2104; break; // Gray
+          }
+        } else {
+          // Bottom area
+          rgb565 = 0x1082;
+        }
+
+        fbBytes[offset] = rgb565 & 0xFF;
+        fbBytes[offset + 1] = (rgb565 >> 8) & 0xFF;
+        offset += 2;
+      }
+    }
+
+    // 3. Assemble multi-block LDR:
+    // Block 1 (First): Code block at 0x1000
+    // Block 2: Framebuffer block at 0x00010000
+    // Block 3 (Final): Final zero-length block
+    const output = new Uint8Array(16 + code.length + 16 + fbBytes.length + 16);
+    let p = 0;
+
+    // Block 1
+    this.writeAdiHeader(output, p, BF52X_LDR_FLAGS.HEADER_SIGNATURE | BF52X_LDR_FLAGS.FIRST, 0x1000, code.length, 0);
+    p += 16;
+    output.set(code, p);
+    p += code.length;
+
+    // Block 2 (Framebuffer at 0x00010000)
+    this.writeAdiHeader(output, p, BF52X_LDR_FLAGS.HEADER_SIGNATURE, 0x00010000, fbBytes.length, 0);
+    p += 16;
+    output.set(fbBytes, p);
+    p += fbBytes.length;
+
+    // Block 3 (Final)
+    this.writeAdiHeader(output, p, BF52X_LDR_FLAGS.HEADER_SIGNATURE | BF52X_LDR_FLAGS.FINAL, 0x1000, 0, 0);
+
     return output;
   }
 

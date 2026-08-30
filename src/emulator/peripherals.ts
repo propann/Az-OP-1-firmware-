@@ -187,16 +187,14 @@ export class HardwarePeripherals {
         const addr = (ppiBase + (y * 320 + x) * 2) >>> 0;
         const rgb565 = this.bus.read16(addr);
 
-        if (rgb565 !== 0) {
-          // Unpack RGB565 to RGB888
-          const r = ((rgb565 >> 11) & 0x1F) * 255 / 31;
-          const g = ((rgb565 >> 5) & 0x3F) * 255 / 63;
-          const b = (rgb565 & 0x1F) * 255 / 31;
-          d[p] = r;
-          d[p + 1] = g;
-          d[p + 2] = b;
-          d[p + 3] = 255;
-        }
+        // Unpack RGB565 to RGB888
+        const r = Math.round(((rgb565 >> 11) & 0x1F) * (255 / 31));
+        const g = Math.round(((rgb565 >> 5) & 0x3F) * (255 / 63));
+        const b = Math.round((rgb565 & 0x1F) * (255 / 31));
+        d[p] = r;
+        d[p + 1] = g;
+        d[p + 2] = b;
+        d[p + 3] = 255;
         p += 4;
       }
     }

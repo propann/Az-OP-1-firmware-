@@ -62,6 +62,32 @@ export class OP1VirtualMachine {
     this.loadFactoryFirmware('243', false);
   }
 
+  // Load diagnostic test fixture
+  public loadDiagnosticFixture(type: 'alu_diagnostic' | 'teboot_vector' | 'sport0_audio' | 'ppi_framebuffer'): boolean {
+    let rawBinary: Uint8Array;
+    let name: string;
+    switch (type) {
+      case 'teboot_vector':
+        rawBinary = LdrParser.createTeBootVectorLdr();
+        name = 'te-boot_vector_test.ldr';
+        break;
+      case 'sport0_audio':
+        rawBinary = LdrParser.createSport0AudioDmaLdr();
+        name = 'sport0_audio_dma_sine.ldr';
+        break;
+      case 'ppi_framebuffer':
+        rawBinary = LdrParser.createPpiFramebufferLdr();
+        name = 'ppi_framebuffer_320x160.ldr';
+        break;
+      case 'alu_diagnostic':
+      default:
+        rawBinary = LdrParser.createDiagnosticLdr();
+        name = 'diagnostic_bf524.ldr';
+        break;
+    }
+    return this.loadFirmwareBinary(rawBinary, name);
+  }
+
   // Backwards-compatible UI action. No proprietary factory firmware is bundled.
   public loadFactoryFirmware(version: string = '243', isModded: boolean = false): boolean {
     const rawBinary = LdrParser.createDiagnosticLdr();
