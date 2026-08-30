@@ -29,12 +29,14 @@ import {
 import { OfficialFirmwareInfo, FirmwareModState, PythonDevToolDef } from '../types';
 import { OFFICIAL_FIRMWARES, PYTHON_DEV_STACK_TOOLS } from '../data/firmwareData';
 import { audioEngine } from '../audio/engine';
+import { WorkspacesAndExtractionView } from './WorkspacesAndExtractionView';
 
 interface FirmwareManagerPanelProps {
   modState: FirmwareModState;
   setModState: React.Dispatch<React.SetStateAction<FirmwareModState>>;
   onOpenWorkshop: () => void;
   onOpenPipeline: () => void;
+  onOpenEmulator?: () => void;
 }
 
 interface BackupItem {
@@ -46,15 +48,16 @@ interface BackupItem {
   sha256: string;
 }
 
-type SubView = 'archive' | 'python-rack' | 'diff-comparator';
+type SubView = 'workspaces' | 'archive' | 'python-rack' | 'diff-comparator';
 
 export const FirmwareManagerPanel: React.FC<FirmwareManagerPanelProps> = ({
   modState,
   setModState,
   onOpenWorkshop,
-  onOpenPipeline
+  onOpenPipeline,
+  onOpenEmulator
 }) => {
-  const [subView, setSubView] = useState<SubView>('archive');
+  const [subView, setSubView] = useState<SubView>('workspaces');
   const [selectedFirmwareId, setSelectedFirmwareId] = useState<string>(OFFICIAL_FIRMWARES[0].id);
   const [diffTargetId, setDiffTargetId] = useState<string>(OFFICIAL_FIRMWARES[2].id); // v243
   const [filterCategory, setFilterCategory] = useState<'ALL' | 'STOCK' | 'MOD' | 'LEGACY'>('ALL');
@@ -313,9 +316,21 @@ export const FirmwareManagerPanel: React.FC<FirmwareManagerPanelProps> = ({
         </div>
       </div>
 
-      {/* Sub-Navigation Switcher between Archive, Python Dev Rack & Diff Comparator */}
+      {/* Sub-Navigation Switcher between Workspaces, Archive, Python Dev Rack & Diff Comparator */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-2 bg-zinc-900/90 rounded-xl border border-zinc-800">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setSubView('workspaces')}
+            className={`px-4 py-2 rounded-lg text-xs font-mono font-bold flex items-center gap-2 transition cursor-pointer ${
+              subView === 'workspaces'
+                ? 'bg-cyan-600 text-white shadow-md shadow-cyan-900/30'
+                : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+            }`}
+          >
+            <FolderOpen className="w-4 h-4 text-orange-400" />
+            Dossiers de Travail & Extraction LZMA
+          </button>
+
           <button
             onClick={() => setSubView('archive')}
             className={`px-4 py-2 rounded-lg text-xs font-mono font-bold flex items-center gap-2 transition cursor-pointer ${
@@ -325,7 +340,7 @@ export const FirmwareManagerPanel: React.FC<FirmwareManagerPanelProps> = ({
             }`}
           >
             <HardDrive className="w-4 h-4" />
-            Archive Officielle des 13 Firmwares ({OFFICIAL_FIRMWARES.length})
+            Archive Officielle ({OFFICIAL_FIRMWARES.length} Firmwares)
           </button>
 
           <button
@@ -337,7 +352,7 @@ export const FirmwareManagerPanel: React.FC<FirmwareManagerPanelProps> = ({
             }`}
           >
             <Terminal className="w-4 h-4 text-emerald-400" />
-            Le Rack Logiciel Python (op1repacker, opie, op1svg)
+            Rack Logiciel Python (op1repacker)
           </button>
 
           <button
@@ -349,7 +364,7 @@ export const FirmwareManagerPanel: React.FC<FirmwareManagerPanelProps> = ({
             }`}
           >
             <ArrowLeftRight className="w-4 h-4 text-amber-400" />
-            Comparateur de Versions (Diff)
+            Comparateur Diff
           </button>
         </div>
 
@@ -357,6 +372,16 @@ export const FirmwareManagerPanel: React.FC<FirmwareManagerPanelProps> = ({
           OP-1 Original (Non-Field) uniquement
         </span>
       </div>
+
+      {/* VIEW 0: WORKSPACES & BATCH ARCHIVE UNPACKER */}
+      {subView === 'workspaces' && (
+        <WorkspacesAndExtractionView
+          modState={modState}
+          setModState={setModState}
+          onOpenEmulator={onOpenEmulator || onOpenWorkshop}
+          onOpenWorkshop={onOpenWorkshop}
+        />
+      )}
 
       {/* VIEW 1: COMPLETE OFFICIAL FIRMWARE ARCHIVE */}
       {subView === 'archive' && (
@@ -497,7 +522,24 @@ export const FirmwareManagerPanel: React.FC<FirmwareManagerPanelProps> = ({
                     {currentFw.version} — {currentFw.fileName}
                   </h3>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const verNum = currentFw.version.replace('v', '');
+                      setModState(prev => ({
+                        ...prev,
+                        baseVersion: verNum,
+                        targetChecksum: currentFw.crc32
+                      }));
+                      audioEngine.playChime('boot');
+                      onOpenEmulator?.();
+                    }}
+                    className="px-3.5 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition cursor-pointer shadow-md shadow-orange-900/30"
+                    title="Exécuter et émuler ce firmware sur l'écran matériel OP-1"
+                  >
+                    <Play className="w-3.5 h-3.5" />
+                    Tester dans l'Émulateur
+                  </button>
                   <button
                     onClick={() => handleDownloadFw(currentFw)}
                     className="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-cyan-400 border border-zinc-700 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition cursor-pointer"

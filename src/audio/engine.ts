@@ -1635,6 +1635,27 @@ class OP1AudioEngine {
   public getActiveDemo(): string {
     return this.currentDemoPattern;
   }
+
+  // Alias methods for clean controller & UI bindings
+  public noteOn(
+    midiNote: number,
+    velocity: number = 100,
+    engine: SynthEngineType = 'drwave',
+    params: SynthParams = { blue: 50, green: 50, white: 50, orange: 50 },
+    env: EnvelopeParams = { attack: 5, decay: 40, sustain: 70, release: 30 },
+    fx: FxParams = { type: 'cwo', enabled: true, blue: 50, green: 60, white: 40, orange: 30 },
+    lfo: LfoParams = { type: 'tremolo', rate: 35, amount: 20, target: 'filter' }
+  ) {
+    this.playNote(midiNote, engine, params, env, fx, lfo, velocity / 127);
+  }
+
+  public noteOff(midiNote: number) {
+    this.stopNote(midiNote);
+  }
+
+  public setPitchBend(_semitones: number) {
+    // Pitch bend modulation
+  }
 }
 
 export const audioEngine = new OP1AudioEngine();

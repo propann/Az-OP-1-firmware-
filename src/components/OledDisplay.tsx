@@ -24,6 +24,9 @@ interface OledDisplayProps {
   bpm: number;
   lastDrumHit?: string;
   isEnvelopeTab?: boolean;
+  isBooting?: boolean;
+  bootProgress?: number;
+  bootMessage?: string;
 }
 
 export const OledDisplay: React.FC<OledDisplayProps> = ({
@@ -37,77 +40,30 @@ export const OledDisplay: React.FC<OledDisplayProps> = ({
   activeNotes,
   bpm,
   lastDrumHit,
-  isEnvelopeTab
+  isEnvelopeTab,
+  isBooting,
+  bootProgress = 100,
+  bootMessage
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const phaseRef = useRef<number>(0);
 
-  // Theme color palettes
-  const getThemePalette = () => {
-    switch (modState.oledTheme) {
-      case 'cyberpunk':
-        return {
-          bg: '#05070d',
-          primary: '#f43f5e',
-          secondary: '#eab308',
-          accent: '#06b6d4',
-          sub: '#a855f7',
-          grid: 'rgba(6, 182, 212, 0.15)',
-          text: '#f8fafc'
-        };
-      case 'neon':
-        return {
-          bg: '#030712',
-          primary: '#22c55e',
-          secondary: '#ec4899',
-          accent: '#38bdf8',
-          sub: '#eab308',
-          grid: 'rgba(34, 197, 94, 0.15)',
-          text: '#f1f5f9'
-        };
-      case 'solarized':
-        return {
-          bg: '#002b36',
-          primary: '#268bd2',
-          secondary: '#b58900',
-          accent: '#2aa198',
-          sub: '#cb4b16',
-          grid: 'rgba(42, 161, 152, 0.15)',
-          text: '#93a1a1'
-        };
-      case 'inverted':
-        return {
-          bg: '#f1f5f9',
-          primary: '#0f172a',
-          secondary: '#ea580c',
-          accent: '#2563eb',
-          sub: '#475569',
-          grid: 'rgba(15, 23, 42, 0.1)',
-          text: '#0f172a'
-        };
-      case 'amber':
-        return {
-          bg: '#140c02',
-          primary: '#f59e0b',
-          secondary: '#d97706',
-          accent: '#fbbf24',
-          sub: '#78350f',
-          grid: 'rgba(245, 158, 11, 0.15)',
-          text: '#fef3c7'
-        };
-      case 'classic':
-      default:
-        return {
-          bg: '#07090e',
-          primary: '#38bdf8',
-          secondary: '#f97316',
-          accent: '#4ade80',
-          sub: '#cbd5e1',
-          grid: 'rgba(255, 255, 255, 0.08)',
-          text: '#ffffff'
-        };
-    }
+  // Exact Teenage Engineering OP-1 Color Palette
+  const OP1_COLORS = {
+    bg: '#000000',
+    blue: '#0090ff',     // Encoder 1
+    green: '#00d659',    // Encoder 2
+    white: '#ffffff',    // Encoder 3
+    orange: '#ff5500',   // Encoder 4
+    dimBlue: '#004080',
+    dimGreen: '#005522',
+    dimWhite: '#444444',
+    dimOrange: '#802b00',
+    gray: '#666666',
+    darkGray: '#222222',
+    grid: 'rgba(255, 255, 255, 0.05)',
+    tapeBrown: '#8B4513'
   };
 
   useEffect(() => {
@@ -121,48 +77,40 @@ export const OledDisplay: React.FC<OledDisplayProps> = ({
     const render = (time: number) => {
       const elapsed = (time - startTime) * 0.001;
       phaseRef.current += 0.04;
-      const theme = getThemePalette();
 
       // Audio waveform data
-      const waveData = audioEngine.getWaveformData();
       const isAudioActive = activeNotes.length > 0 || tapeState.isPlaying;
 
-      ctx.fillStyle = theme.bg;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Clear Black OLED Canvas
+      ctx.fillStyle = OP1_COLORS.bg;
+      ctx.fillRect(0, 0, 320, 240);
 
-      // Subtle background grid
-      ctx.strokeStyle = theme.grid;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (let x = 20; x < canvas.width; x += 20) {
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-      }
-      for (let y = 20; y < canvas.height; y += 20) {
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-      }
-      ctx.stroke();
+      // Render Display Header (Mode, Preset / Engine Name, Metronome, Battery)
+      renderOP1Header(ctx, mode, engine, bpm, modState, isAudioActive);
 
-      // Top Status Bar
-      renderStatusBar(ctx, theme, mode, engine, bpm, tapeState, modState);
-
-      // Main Render Modes
-      if (isEnvelopeTab) {
-        renderEnvelopeScreen(ctx, theme, envParams, isAudioActive);
+      // Main Screen Content based on Mode
+      if (isBooting) {
+        renderBootScreen(ctx, modState, bootProgress, bootMessage || 'INITIALISATION MATÉRIELLE ADSP-BF533...');
+      } else if (mode === 'teboot') {
+        renderTeBootScreen(ctx, modState);
+      } else if (isEnvelopeTab) {
+        renderEnvelopeScreen(ctx, envParams, isAudioActive);
       } else if (fxParams.type === 'cwo' && mode === 'synth' && fxParams.enabled) {
-        renderCwoScreen(ctx, theme, fxParams, modState.cwoGraphic, elapsed, isAudioActive);
+        renderCwoScreen(ctx, fxParams, elapsed, isAudioActive);
       } else if (mode === 'synth') {
-        renderSynthEngine(ctx, theme, engine, synthParams, elapsed, isAudioActive, waveData);
+        renderSynthEngine(ctx, engine, synthParams, elapsed, isAudioActive);
       } else if (mode === 'drum') {
-        renderDrumScreen(ctx, theme, lastDrumHit, elapsed);
+        renderDrumScreen(ctx, lastDrumHit, elapsed);
       } else if (mode === 'tape') {
-        renderTapeScreen(ctx, theme, tapeState, elapsed, modState.tapeGraphicInvert);
+        renderTapeScreen(ctx, tapeState, elapsed);
       } else if (mode === 'mixer') {
-        renderMixerScreen(ctx, theme, tapeState, elapsed);
+        renderMixerScreen(ctx, tapeState);
       } else {
-        renderSynthEngine(ctx, theme, engine, synthParams, elapsed, isAudioActive, waveData);
+        renderSynthEngine(ctx, engine, synthParams, elapsed, isAudioActive);
       }
+
+      // Render 4 Encoder Parameter Readouts at the bottom (Blue, Green, White, Orange)
+      renderEncoderFooter(ctx, mode, engine, synthParams, envParams, fxParams, tapeState);
 
       animFrameRef.current = requestAnimationFrame(render);
     };
@@ -174,55 +122,215 @@ export const OledDisplay: React.FC<OledDisplayProps> = ({
         cancelAnimationFrame(animFrameRef.current);
       }
     };
-  }, [mode, engine, synthParams, envParams, fxParams, tapeState, modState, activeNotes, bpm, lastDrumHit, isEnvelopeTab]);
+  }, [mode, engine, synthParams, envParams, fxParams, tapeState, modState, activeNotes, bpm, lastDrumHit, isEnvelopeTab, isBooting, bootProgress, bootMessage]);
 
-  // --- RENDER HELPERS ---
-
-  const renderStatusBar = (
+  // --- HEADER WITH ICONS AND STATUS ---
+  const renderOP1Header = (
     ctx: CanvasRenderingContext2D,
-    theme: ReturnType<typeof getThemePalette>,
     currentMode: ScreenMode,
     currentEngine: SynthEngineType,
     currentBpm: number,
-    tape: TapeState,
-    mod: FirmwareModState
+    mod: FirmwareModState,
+    isActive: boolean
   ) => {
-    ctx.fillStyle = theme.sub;
-    ctx.font = 'bold 9px "Space Mono", monospace';
-    ctx.fillText(`${currentMode.toUpperCase()} // ${currentEngine.toUpperCase()}`, 10, 14);
+    // Mode Label (Top Left)
+    ctx.fillStyle = OP1_COLORS.white;
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${currentMode.toUpperCase()}`, 12, 16);
 
-    // BPM & Metronome blink
-    ctx.fillStyle = (Math.floor(Date.now() / (60000 / currentBpm)) % 2 === 0) ? theme.secondary : theme.sub;
-    ctx.fillText(`• ${currentBpm} BPM`, 160, 14);
+    ctx.fillStyle = OP1_COLORS.gray;
+    ctx.fillText(`// ${currentEngine.toUpperCase()}`, 65, 16);
 
-    // FW Version tag
-    ctx.fillStyle = mod.unlockIterSynth ? theme.accent : theme.sub;
-    ctx.fillText(`FW ${mod.baseVersion} [AZ-MOD]`, 235, 14);
-
-    // Divider
-    ctx.strokeStyle = theme.grid;
+    // BPM & Metronome Pulse (Center)
+    const isBlink = Math.floor(Date.now() / (60000 / currentBpm)) % 2 === 0;
+    ctx.fillStyle = isBlink ? OP1_COLORS.orange : OP1_COLORS.gray;
     ctx.beginPath();
-    ctx.moveTo(10, 19);
-    ctx.lineTo(310, 19);
+    ctx.arc(175, 13, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = OP1_COLORS.white;
+    ctx.fillText(`${currentBpm} BPM`, 185, 16);
+
+    // Battery / Firmware Tag (Top Right)
+    ctx.fillStyle = mod.unlockIterSynth ? OP1_COLORS.green : OP1_COLORS.gray;
+    ctx.textAlign = 'right';
+    ctx.fillText(`FW ${mod.baseVersion}`, 308, 16);
+
+    // Top Divider Line
+    ctx.strokeStyle = OP1_COLORS.darkGray;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(10, 22);
+    ctx.lineTo(310, 22);
     ctx.stroke();
   };
 
+  // --- 4 ENCODER BOTTOM FOOTER ---
+  const renderEncoderFooter = (
+    ctx: CanvasRenderingContext2D,
+    currentMode: ScreenMode,
+    currentEngine: SynthEngineType,
+    synth: SynthParams,
+    env: EnvelopeParams,
+    fx: FxParams,
+    tape: TapeState
+  ) => {
+    const y = 228;
+    const colW = 75;
+    const startX = 12;
+
+    let p1 = { val: synth.blue, label: 'P1' };
+    let p2 = { val: synth.green, label: 'P2' };
+    let p3 = { val: synth.white, label: 'P3' };
+    let p4 = { val: synth.orange, label: 'P4' };
+
+    if (currentMode === 'synth') {
+      if (currentEngine === 'drwave') {
+        p1 = { val: synth.blue, label: 'FREQ' };
+        p2 = { val: synth.green, label: 'FORM' };
+        p3 = { val: synth.white, label: 'CHOP' };
+        p4 = { val: synth.orange, label: 'WAVE' };
+      } else if (currentEngine === 'iter') {
+        p1 = { val: synth.blue, label: 'CELL' };
+        p2 = { val: synth.green, label: 'FEED' };
+        p3 = { val: synth.white, label: 'CUT' };
+        p4 = { val: synth.orange, label: 'RES' };
+      } else if (currentEngine === 'fm') {
+        p1 = { val: synth.blue, label: 'RATIO' };
+        p2 = { val: synth.green, label: 'DEPTH' };
+        p3 = { val: synth.white, label: 'BRIGHT' };
+        p4 = { val: synth.orange, label: 'ENV' };
+      } else if (currentEngine === 'string') {
+        p1 = { val: synth.blue, label: 'NOISE' };
+        p2 = { val: synth.green, label: 'TUNE' };
+        p3 = { val: synth.white, label: 'DAMP' };
+        p4 = { val: synth.orange, label: 'PLUCK' };
+      } else if (currentEngine === 'pulse') {
+        p1 = { val: synth.blue, label: 'WIDTH' };
+        p2 = { val: synth.green, label: 'DETUNE' };
+        p3 = { val: synth.white, label: 'CUT' };
+        p4 = { val: synth.orange, label: 'RES' };
+      } else if (currentEngine === 'digital') {
+        p1 = { val: synth.blue, label: 'CRUSH' };
+        p2 = { val: synth.green, label: 'RING' };
+        p3 = { val: synth.white, label: 'CUT' };
+        p4 = { val: synth.orange, label: 'RES' };
+      }
+    } else if (currentMode === 'tape' || currentMode === 'mixer') {
+      p1 = { val: tape.tracks[0].volume, label: 'TRK 1' };
+      p2 = { val: tape.tracks[1].volume, label: 'TRK 2' };
+      p3 = { val: tape.tracks[2].volume, label: 'TRK 3' };
+      p4 = { val: tape.tracks[3].volume, label: 'TRK 4' };
+    }
+
+    // Bottom Divider Line
+    ctx.strokeStyle = OP1_COLORS.darkGray;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(10, 205);
+    ctx.lineTo(310, 205);
+    ctx.stroke();
+
+    const items = [
+      { color: OP1_COLORS.blue, ...p1 },
+      { color: OP1_COLORS.green, ...p2 },
+      { color: OP1_COLORS.white, ...p3 },
+      { color: OP1_COLORS.orange, ...p4 },
+    ];
+
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'left';
+
+    items.forEach((it, i) => {
+      const cx = startX + i * colW;
+      
+      // Color Dot
+      ctx.fillStyle = it.color;
+      ctx.beginPath();
+      ctx.arc(cx + 4, y - 9, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Label & Value
+      ctx.fillStyle = OP1_COLORS.gray;
+      ctx.fillText(it.label, cx + 12, y - 6);
+
+      ctx.fillStyle = it.color;
+      ctx.fillText(`${it.val}%`, cx + 12, y + 5);
+    });
+  };
+
+  // --- SYNTH ENGINE SCREENS ---
   const renderSynthEngine = (
     ctx: CanvasRenderingContext2D,
-    theme: ReturnType<typeof getThemePalette>,
     currentEngine: SynthEngineType,
     params: SynthParams,
     elapsed: number,
-    isActive: boolean,
-    waveData: Uint8Array
+    isActive: boolean
   ) => {
     const cx = 160;
-    const cy = 125;
+    const cy = 115;
 
     switch (currentEngine) {
+      case 'drwave': {
+        // Authentic Dr. Wave: Ocean Waves + Sailor in Boat with Formant Mouth
+        ctx.strokeStyle = OP1_COLORS.blue;
+        ctx.lineWidth = 2.5;
+
+        // Ocean Wave Horizon
+        ctx.beginPath();
+        for (let x = 10; x <= 310; x += 5) {
+          const waveHeight = 8 + (params.orange / 100) * 14;
+          const y = 140 + Math.sin(x * 0.04 + elapsed * 3) * waveHeight * (isActive ? 1.3 : 0.8);
+          if (x === 10) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Sailor Boat
+        const boatY = 130 + Math.sin(elapsed * 3) * 5;
+        ctx.fillStyle = OP1_COLORS.orange;
+        ctx.beginPath();
+        ctx.moveTo(cx - 28, boatY);
+        ctx.lineTo(cx + 28, boatY);
+        ctx.lineTo(cx + 18, boatY + 16);
+        ctx.lineTo(cx - 18, boatY + 16);
+        ctx.closePath();
+        ctx.fill();
+
+        // Sailor Body & Head
+        ctx.fillStyle = OP1_COLORS.white;
+        ctx.beginPath();
+        ctx.arc(cx, boatY - 14, 9, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sailor Hat
+        ctx.fillStyle = OP1_COLORS.blue;
+        ctx.fillRect(cx - 12, boatY - 25, 24, 6);
+
+        // Vocal Formant Mouth opening
+        const mouthOpen = 2 + (params.blue / 100) * 6 + (isActive ? 4 : 0);
+        ctx.fillStyle = OP1_COLORS.bg;
+        ctx.beginPath();
+        ctx.ellipse(cx, boatY - 12, 3.5, mouthOpen, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sound Waves radiating from mouth
+        if (isActive) {
+          ctx.strokeStyle = OP1_COLORS.green;
+          ctx.lineWidth = 1.5;
+          for (let r = 12; r <= 32; r += 8) {
+            ctx.beginPath();
+            ctx.arc(cx, boatY - 12, r, -Math.PI / 3, Math.PI / 3);
+            ctx.stroke();
+          }
+        }
+        break;
+      }
+
       case 'iter': {
-        // Unlocked Mod: Cellular / Additive Bubbles & DNA Helix
-        ctx.strokeStyle = theme.accent;
+        // Authentic ITER: Cellular Multi-Bubbles & DNA Helix
+        ctx.strokeStyle = OP1_COLORS.green;
         ctx.lineWidth = 2;
         const count = 4 + Math.floor((params.blue / 100) * 6);
         const radius = 25 + (params.white / 100) * 35;
@@ -233,115 +341,33 @@ export const OledDisplay: React.FC<OledDisplayProps> = ({
           const by = cy + Math.sin(angle) * (radius * 0.6);
           const bRadius = 6 + (params.orange / 100) * 10 * (isActive ? 1.4 : 1.0);
 
-          ctx.fillStyle = i % 2 === 0 ? theme.primary : theme.accent;
+          ctx.fillStyle = i % 2 === 0 ? OP1_COLORS.blue : OP1_COLORS.orange;
           ctx.beginPath();
           ctx.arc(bx, by, bRadius, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
 
-          // Connective cellular filaments
-          ctx.strokeStyle = theme.secondary;
+          // Connective filaments
+          ctx.strokeStyle = OP1_COLORS.gray;
           ctx.beginPath();
           ctx.moveTo(cx, cy);
           ctx.lineTo(bx, by);
           ctx.stroke();
         }
 
-        // Center nucleus
-        ctx.fillStyle = theme.secondary;
+        // Center Nucleus
+        ctx.fillStyle = OP1_COLORS.white;
         ctx.beginPath();
         ctx.arc(cx, cy, 10 + (isActive ? 4 : 0), 0, Math.PI * 2);
         ctx.fill();
-
-        ctx.fillStyle = theme.text;
-        ctx.font = '8px "Space Mono", monospace';
-        ctx.fillText(`CELL DENSITY: ${params.blue}%`, 15, 215);
-        ctx.fillText(`FM FEEDBACK: ${params.green}%`, 165, 215);
-        break;
-      }
-
-      case 'drwave': {
-        // Iconic Dr Wave sailor + ocean waves
-        ctx.strokeStyle = theme.primary;
-        ctx.lineWidth = 2;
-
-        // Ocean Waves
-        ctx.beginPath();
-        for (let x = 10; x <= 310; x += 5) {
-          const waveHeight = 12 + (params.orange / 100) * 16;
-          const y = 145 + Math.sin(x * 0.05 + elapsed * 3) * waveHeight * (isActive ? 1.3 : 0.8);
-          if (x === 10) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-
-        // Dr Wave Boat & Sailor
-        const boatY = 135 + Math.sin(elapsed * 3) * 6;
-        ctx.fillStyle = theme.secondary;
-        ctx.beginPath();
-        ctx.moveTo(cx - 25, boatY);
-        ctx.lineTo(cx + 25, boatY);
-        ctx.lineTo(cx + 15, boatY + 14);
-        ctx.lineTo(cx - 15, boatY + 14);
-        ctx.closePath();
-        ctx.fill();
-
-        // Sailor figure
-        ctx.fillStyle = theme.text;
-        ctx.beginPath();
-        ctx.arc(cx, boatY - 14, 8, 0, Math.PI * 2); // Head
-        ctx.fill();
-
-        // Sailor Hat
-        ctx.fillStyle = theme.primary;
-        ctx.fillRect(cx - 10, boatY - 24, 20, 6);
-
-        // Vocal Formant mouth opening
-        const mouthOpen = (params.blue / 100) * 6 + (isActive ? 3 : 1);
-        ctx.fillStyle = theme.bg;
-        ctx.beginPath();
-        ctx.ellipse(cx, boatY - 12, 3, mouthOpen, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = theme.text;
-        ctx.font = '8px "Space Mono", monospace';
-        ctx.fillText(`VOWEL FORM: ${params.blue}%`, 15, 215);
-        ctx.fillText(`WAVE CHOP: ${params.orange}%`, 165, 215);
-        break;
-      }
-
-      case 'digital': {
-        // Wavefolding gritty staircase
-        ctx.strokeStyle = theme.primary;
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        const steps = 16;
-        for (let i = 0; i < steps; i++) {
-          const sx = 30 + (i / steps) * 260;
-          const fold = (params.blue / 100) * 30;
-          const sy = cy + ((i % 2 === 0 ? -1 : 1) * (30 + fold)) * (isActive ? 1.2 : 0.8);
-          if (i === 0) ctx.moveTo(sx, sy);
-          else {
-            ctx.lineTo(sx, sy);
-            ctx.lineTo(sx + 260 / steps, sy);
-          }
-        }
-        ctx.stroke();
-
-        ctx.fillStyle = theme.secondary;
-        ctx.fillRect(cx - 15, cy - 15, 30, 30);
-        ctx.fillStyle = theme.text;
-        ctx.font = '8px "Space Mono", monospace';
-        ctx.fillText(`RING MOD: ${params.green}%`, 15, 215);
-        ctx.fillText(`BIT RES: ${params.white}%`, 165, 215);
         break;
       }
 
       case 'fm': {
-        // 3D wireframe geometric polygon
+        // Authentic FM: 3D Wireframe Polyhedron
         const vertices = 6;
         const r = 40 + (params.green / 100) * 25;
-        ctx.strokeStyle = theme.accent;
+        ctx.strokeStyle = OP1_COLORS.orange;
         ctx.lineWidth = 2;
         ctx.beginPath();
         for (let i = 0; i <= vertices; i++) {
@@ -354,7 +380,7 @@ export const OledDisplay: React.FC<OledDisplayProps> = ({
         ctx.stroke();
 
         // Inner polygon
-        ctx.strokeStyle = theme.secondary;
+        ctx.strokeStyle = OP1_COLORS.green;
         ctx.beginPath();
         for (let i = 0; i <= vertices; i++) {
           const a = (i / vertices) * Math.PI * 2 - elapsed * 1.5;
@@ -364,42 +390,32 @@ export const OledDisplay: React.FC<OledDisplayProps> = ({
           else ctx.lineTo(px, py);
         }
         ctx.stroke();
-
-        ctx.fillStyle = theme.text;
-        ctx.font = '8px "Space Mono", monospace';
-        ctx.fillText(`MOD RATIO: ${(0.5 + (params.blue / 100) * 4.5).toFixed(2)}x`, 15, 215);
-        ctx.fillText(`FM INDEX: ${params.green}%`, 165, 215);
         break;
       }
 
       case 'string': {
-        // Vibrating physical strings
-        ctx.strokeStyle = theme.primary;
-        ctx.lineWidth = 2;
-        for (let s = 0; s < 5; s++) {
-          const sy = 80 + s * 22;
+        // Authentic String: 4 Plucked Strings Vibrating
+        for (let s = 0; s < 4; s++) {
+          const sy = 65 + s * 28;
+          ctx.strokeStyle = [OP1_COLORS.blue, OP1_COLORS.green, OP1_COLORS.white, OP1_COLORS.orange][s];
+          ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.moveTo(30, sy);
           const damp = params.white / 100;
-          const pluckAmp = isActive ? (15 - s * 2) * (1 - damp * 0.5) : 1;
+          const pluckAmp = isActive ? (16 - s * 2) * (1 - damp * 0.5) : 1;
           const freqMultiplier = (s + 1) * 2;
           for (let x = 30; x <= 290; x += 10) {
-            const vy = sy + Math.sin((x / 260) * Math.PI * freqMultiplier + elapsed * 12) * pluckAmp * Math.sin((x - 30) / 260 * Math.PI);
+            const vy = sy + Math.sin((x / 260) * Math.PI * freqMultiplier + elapsed * 14) * pluckAmp * Math.sin((x - 30) / 260 * Math.PI);
             ctx.lineTo(x, vy);
           }
           ctx.stroke();
         }
-
-        ctx.fillStyle = theme.text;
-        ctx.font = '8px "Space Mono", monospace';
-        ctx.fillText(`NOISE BURST: ${params.blue}%`, 15, 215);
-        ctx.fillText(`STRING DAMP: ${params.white}%`, 165, 215);
         break;
       }
 
       case 'pulse': {
-        // Pulse width oscillator visual
-        ctx.strokeStyle = theme.accent;
+        // Authentic Pulse: Square Wave with Pulse-Width Visualizer
+        ctx.strokeStyle = OP1_COLORS.orange;
         ctx.lineWidth = 2.5;
         const duty = 0.1 + (params.blue / 100) * 0.8;
         const period = 50;
@@ -414,185 +430,64 @@ export const OledDisplay: React.FC<OledDisplayProps> = ({
           ctx.lineTo(x + highW + lowW, cy - 30);
         }
         ctx.stroke();
-
-        ctx.fillStyle = theme.text;
-        ctx.font = '8px "Space Mono", monospace';
-        ctx.fillText(`PULSE WIDTH: ${Math.round(duty * 100)}%`, 15, 215);
-        ctx.fillText(`DETUNE: ${params.green}%`, 165, 215);
         break;
       }
 
-      case 'granular': {
-        // Granular Cloud Glitch Particles
-        ctx.fillStyle = theme.primary;
-        const particleCount = 18 + Math.floor((params.blue / 100) * 24);
-        for (let i = 0; i < particleCount; i++) {
-          const pAngle = (i / particleCount) * Math.PI * 2 + elapsed * (1 + (params.green / 50));
-          const pDist = 15 + Math.sin(elapsed * 4 + i) * (20 + (params.white / 100) * 35);
-          const px = cx + Math.cos(pAngle) * pDist;
-          const py = cy + Math.sin(pAngle) * (pDist * 0.75);
-          const pSize = 2 + (i % 3) * 1.5 * (isActive ? 1.5 : 1);
-
-          ctx.fillStyle = i % 2 === 0 ? theme.accent : theme.secondary;
-          ctx.fillRect(px - pSize / 2, py - pSize / 2, pSize, pSize);
-
-          if (i % 4 === 0) {
-            ctx.strokeStyle = theme.grid;
-            ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.lineTo(px, py);
-            ctx.stroke();
-          }
-        }
-        ctx.fillStyle = theme.text;
-        ctx.font = '8px "Space Mono", monospace';
-        ctx.fillText(`GRAIN DENSITY: ${params.blue}%`, 15, 215);
-        ctx.fillText(`GRAIN DETUNE: ${params.green}%`, 165, 215);
-        break;
-      }
-
-      case 'sidchip': {
-        // C64 SID Chip 8-Bit Pixel Matrix
-        ctx.strokeStyle = theme.primary;
-        ctx.lineWidth = 2;
-        const gridCols = 8;
-        const gridRows = 5;
-        const cellW = 20;
-        const cellH = 14;
-        const startX = cx - (gridCols * cellW) / 2;
-        const startY = cy - (gridRows * cellH) / 2;
-
-        for (let r = 0; r < gridRows; r++) {
-          for (let c = 0; c < gridCols; c++) {
-            const isLit = ((c + r * 3 + Math.floor(elapsed * 10)) % 5 === 0) || (isActive && (c + r) % 2 === 0);
-            ctx.fillStyle = isLit ? theme.secondary : 'rgba(255,255,255,0.05)';
-            ctx.fillRect(startX + c * cellW + 2, startY + r * cellH + 2, cellW - 4, cellH - 4);
-            ctx.strokeStyle = isLit ? theme.accent : theme.grid;
-            ctx.strokeRect(startX + c * cellW + 2, startY + r * cellH + 2, cellW - 4, cellH - 4);
-          }
-        }
-        ctx.fillStyle = theme.text;
-        ctx.font = '8px "Space Mono", monospace';
-        ctx.fillText(`PULSE WIDTH: ${params.blue}%`, 15, 215);
-        ctx.fillText(`HARD SYNC: ${params.green}%`, 165, 215);
-        break;
-      }
-
-      case 'acid303': {
-        // TB-303 Diode Ladder Resonance Curve & Accent Pulse
-        ctx.strokeStyle = theme.accent;
+      case 'digital':
+      default: {
+        // Digital Wavefolding Staircase
+        ctx.strokeStyle = OP1_COLORS.blue;
         ctx.lineWidth = 2.5;
         ctx.beginPath();
-        const curveSteps = 32;
-        for (let i = 0; i <= curveSteps; i++) {
-          const t = i / curveSteps;
-          const x = 30 + t * 260;
-          const resonancePeak = Math.exp(-Math.pow((t - 0.45) * 8, 2)) * (params.orange / 100) * 55;
-          const y = cy + 25 - (1 - Math.pow(t, 2)) * 30 - resonancePeak * (isActive ? 1.4 : 1.0);
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-
-        ctx.fillStyle = theme.secondary;
-        ctx.beginPath();
-        ctx.arc(cx - 10, cy - (params.orange / 100) * 20, 6, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = theme.text;
-        ctx.font = '8px "Space Mono", monospace';
-        ctx.fillText(`ENV MOD: ${params.green}%`, 15, 215);
-        ctx.fillText(`RESONANCE: ${params.orange}%`, 165, 215);
-        break;
-      }
-
-      case 'bellres': {
-        // Modal Resonator Chladni Pattern
-        ctx.strokeStyle = theme.primary;
-        ctx.lineWidth = 1.5;
-        const rings = 4;
-        for (let r = 1; r <= rings; r++) {
-          const rad = r * 18 + (params.blue / 100) * 10;
-          ctx.beginPath();
-          for (let a = 0; a <= Math.PI * 2; a += 0.1) {
-            const harmonicWarp = Math.sin(a * 4 + elapsed * 3) * (5 + (params.white / 100) * 8) * (isActive ? 1.3 : 0.6);
-            const bx = cx + Math.cos(a) * (rad + harmonicWarp);
-            const by = cy + Math.sin(a) * (rad * 0.75 + harmonicWarp);
-            if (a === 0) ctx.moveTo(bx, by);
-            else ctx.lineTo(bx, by);
+        const steps = 16;
+        for (let i = 0; i < steps; i++) {
+          const sx = 30 + (i / steps) * 260;
+          const fold = (params.blue / 100) * 30;
+          const sy = cy + ((i % 2 === 0 ? -1 : 1) * (25 + fold)) * (isActive ? 1.2 : 0.8);
+          if (i === 0) ctx.moveTo(sx, sy);
+          else {
+            ctx.lineTo(sx, sy);
+            ctx.lineTo(sx + 260 / steps, sy);
           }
-          ctx.closePath();
-          ctx.stroke();
-        }
-        ctx.fillStyle = theme.text;
-        ctx.font = '8px "Space Mono", monospace';
-        ctx.fillText(`INHARMONIC: ${params.blue}%`, 15, 215);
-        ctx.fillText(`MODAL DECAY: ${params.orange}%`, 165, 215);
-        break;
-      }
-
-      case 'cluster':
-      case 'phase':
-      default: {
-        // Multi-ray oscilloscope
-        ctx.strokeStyle = theme.primary;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        for (let i = 0; i < 8; i++) {
-          const ang = (i / 8) * Math.PI * 2 + elapsed * 0.5;
-          const len = 30 + (params.green / 100) * 30 * (isActive ? 1.3 : 1.0);
-          ctx.moveTo(cx, cy);
-          ctx.lineTo(cx + Math.cos(ang) * len, cy + Math.sin(ang) * len);
         }
         ctx.stroke();
 
-        ctx.fillStyle = theme.text;
-        ctx.font = '8px "Space Mono", monospace';
-        ctx.fillText(`SPREAD: ${params.green}%`, 15, 215);
-        ctx.fillText(`CUTOFF: ${params.white}%`, 165, 215);
+        ctx.fillStyle = OP1_COLORS.orange;
+        ctx.fillRect(cx - 15, cy - 15, 30, 30);
         break;
       }
     }
-
-    // Bottom parameter color dots
-    const colors = [theme.primary, theme.accent, theme.text, theme.secondary];
-    const vals = [params.blue, params.green, params.white, params.orange];
-    colors.forEach((c, idx) => {
-      ctx.fillStyle = c;
-      ctx.beginPath();
-      ctx.arc(30 + idx * 75, 226, 3, 0, Math.PI * 2);
-      ctx.fill();
-    });
   };
 
+  // --- ENVELOPE (ADSR) SCREEN ---
   const renderEnvelopeScreen = (
     ctx: CanvasRenderingContext2D,
-    theme: ReturnType<typeof getThemePalette>,
     env: EnvelopeParams,
     isActive: boolean
   ) => {
-    ctx.fillStyle = theme.text;
-    ctx.font = 'bold 10px "Space Mono", monospace';
-    ctx.fillText('ENVELOPE (ADSR)', 115, 45);
+    ctx.fillStyle = OP1_COLORS.white;
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('ENVELOPE // ADSR', 160, 48);
 
-    const startX = 40;
+    const startX = 35;
     const baseY = 175;
-    const peakY = 70;
-    const totalW = 240;
+    const peakY = 65;
+    const totalW = 250;
 
-    const aW = Math.max(10, (env.attack / 100) * 60);
-    const dW = Math.max(10, (env.decay / 100) * 60);
+    const aW = Math.max(10, (env.attack / 100) * (totalW * 0.25));
+    const dW = Math.max(10, (env.decay / 100) * (totalW * 0.3));
+    const sW = totalW * 0.25;
+    const rW = Math.max(10, (env.release / 100) * (totalW * 0.2));
     const sLevel = baseY - (env.sustain / 100) * (baseY - peakY);
-    const sW = 60;
-    const rW = Math.max(10, (env.release / 100) * 60);
 
     const pA = { x: startX + aW, y: peakY };
     const pD = { x: pA.x + dW, y: sLevel };
     const pS = { x: pD.x + sW, y: sLevel };
     const pR = { x: pS.x + rW, y: baseY };
 
-    // Fill curve
-    ctx.fillStyle = theme.grid;
+    // Solid Fill Area
+    ctx.fillStyle = 'rgba(0, 144, 255, 0.15)';
     ctx.beginPath();
     ctx.moveTo(startX, baseY);
     ctx.lineTo(pA.x, pA.y);
@@ -602,8 +497,8 @@ export const OledDisplay: React.FC<OledDisplayProps> = ({
     ctx.closePath();
     ctx.fill();
 
-    // Stroke line
-    ctx.strokeStyle = isActive ? theme.secondary : theme.primary;
+    // Line
+    ctx.strokeStyle = isActive ? OP1_COLORS.orange : OP1_COLORS.blue;
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(startX, baseY);
@@ -613,323 +508,325 @@ export const OledDisplay: React.FC<OledDisplayProps> = ({
     ctx.lineTo(pR.x, pR.y);
     ctx.stroke();
 
-    // Node markers
+    // 4 Nodes
     [pA, pD, pS, pR].forEach((pt, idx) => {
-      const nodeColors = [theme.primary, theme.accent, theme.text, theme.secondary];
+      const nodeColors = [OP1_COLORS.blue, OP1_COLORS.green, OP1_COLORS.white, OP1_COLORS.orange];
       ctx.fillStyle = nodeColors[idx];
       ctx.beginPath();
       ctx.arc(pt.x, pt.y, 4.5, 0, Math.PI * 2);
       ctx.fill();
     });
-
-    ctx.fillStyle = theme.text;
-    ctx.font = '8px "Space Mono", monospace';
-    ctx.fillText(`ATT: ${env.attack}%`, 25, 215);
-    ctx.fillText(`DEC: ${env.decay}%`, 95, 215);
-    ctx.fillText(`SUS: ${env.sustain}%`, 165, 215);
-    ctx.fillText(`REL: ${env.release}%`, 235, 215);
   };
 
+  // --- CWO EFFECT SCREEN (ICONIC COW) ---
   const renderCwoScreen = (
     ctx: CanvasRenderingContext2D,
-    theme: ReturnType<typeof getThemePalette>,
     fx: FxParams,
-    animal: 'cow' | 'moose' | 'cat' | 'shiba',
     elapsed: number,
     isActive: boolean
   ) => {
-    ctx.fillStyle = theme.text;
-    ctx.font = 'bold 10px "Space Mono", monospace';
-    ctx.fillText(`CWO EFFECT // [${animal.toUpperCase()}]`, 85, 45);
+    ctx.fillStyle = OP1_COLORS.white;
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('CWO DELAY EFFECT', 160, 48);
 
     const cx = 160;
-    const cy = 120;
+    const cy = 115;
     const chewOffset = Math.sin(elapsed * 8) * (isActive ? 4 : 2);
 
-    // Frequency cable going into animal mouth
-    ctx.strokeStyle = theme.primary;
+    // Cable going into cow's mouth
+    ctx.strokeStyle = OP1_COLORS.blue;
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(20, cy + 20);
+    ctx.moveTo(25, cy + 20);
     ctx.bezierCurveTo(70, cy + 50, 110, cy - 20, cx - 15, cy + 10 + chewOffset);
     ctx.stroke();
 
-    // Animal Rendering
-    ctx.fillStyle = theme.secondary;
-    if (animal === 'moose') {
-      // Moose Antlers & Head
-      ctx.fillRect(cx - 20, cy - 15, 40, 35);
-      ctx.strokeStyle = theme.accent;
-      ctx.lineWidth = 3;
-      // Left Antler
-      ctx.beginPath();
-      ctx.moveTo(cx - 15, cy - 15);
-      ctx.lineTo(cx - 35, cy - 35);
-      ctx.lineTo(cx - 20, cy - 45);
-      ctx.stroke();
-      // Right Antler
-      ctx.beginPath();
-      ctx.moveTo(cx + 15, cy - 15);
-      ctx.lineTo(cx + 35, cy - 35);
-      ctx.lineTo(cx + 20, cy - 45);
-      ctx.stroke();
-    } else if (animal === 'cat') {
-      // Cyber Cat Head & Ears
-      ctx.fillRect(cx - 20, cy - 10, 40, 30);
-      ctx.beginPath();
-      ctx.moveTo(cx - 20, cy - 10);
-      ctx.lineTo(cx - 10, cy - 28);
-      ctx.lineTo(cx, cy - 10);
-      ctx.moveTo(cx, cy - 10);
-      ctx.lineTo(cx + 10, cy - 28);
-      ctx.lineTo(cx + 20, cy - 10);
-      ctx.fill();
-    } else if (animal === 'shiba') {
-      // Shiba Dog Head
-      ctx.fillRect(cx - 22, cy - 12, 44, 32);
-      ctx.fillStyle = theme.text;
-      ctx.beginPath();
-      ctx.arc(cx - 10, cy + 2, 7, 0, Math.PI * 2);
-      ctx.arc(cx + 10, cy + 2, 7, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = theme.secondary;
-    } else {
-      // Classic OP-1 Cow
-      ctx.fillRect(cx - 25, cy - 15, 50, 35);
-      // Cow Horns
-      ctx.fillStyle = theme.sub;
-      ctx.beginPath();
-      ctx.moveTo(cx - 20, cy - 15);
-      ctx.lineTo(cx - 30, cy - 28);
-      ctx.lineTo(cx - 15, cy - 20);
-      ctx.moveTo(cx + 20, cy - 15);
-      ctx.lineTo(cx + 30, cy - 28);
-      ctx.lineTo(cx + 15, cy - 20);
-      ctx.fill();
-    }
+    // Cow Body
+    ctx.fillStyle = OP1_COLORS.orange;
+    ctx.fillRect(cx - 25, cy - 15, 50, 35);
 
-    // Animal Eyes (Blinking / Glowing)
-    ctx.fillStyle = theme.accent;
+    // Cow Horns
+    ctx.fillStyle = OP1_COLORS.white;
+    ctx.beginPath();
+    ctx.moveTo(cx - 20, cy - 15);
+    ctx.lineTo(cx - 30, cy - 28);
+    ctx.lineTo(cx - 15, cy - 20);
+    ctx.moveTo(cx + 20, cy - 15);
+    ctx.lineTo(cx + 30, cy - 28);
+    ctx.lineTo(cx + 15, cy - 20);
+    ctx.fill();
+
+    // Cow Eyes
+    ctx.fillStyle = OP1_COLORS.green;
     ctx.beginPath();
     ctx.arc(cx - 10, cy - 2, 3.5, 0, Math.PI * 2);
     ctx.arc(cx + 10, cy - 2, 3.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Animal Chewing Mouth
-    ctx.fillStyle = theme.bg;
+    // Chewing Mouth
+    ctx.fillStyle = OP1_COLORS.bg;
     ctx.fillRect(cx - 12, cy + 12 + chewOffset, 24, 6 + Math.abs(chewOffset));
-
-    ctx.fillStyle = theme.text;
-    ctx.font = '8px "Space Mono", monospace';
-    ctx.fillText(`FREQ SHIFT: ${fx.blue}%`, 15, 215);
-    ctx.fillText(`RESONANCE: ${fx.green}%`, 95, 215);
-    ctx.fillText(`DELAY: ${fx.white}%`, 175, 215);
-    ctx.fillText(`WET: ${fx.orange}%`, 245, 215);
   };
 
+  // --- TAPE SCREEN (2 ROTATING REELS & 4 TRACKS) ---
   const renderTapeScreen = (
     ctx: CanvasRenderingContext2D,
-    theme: ReturnType<typeof getThemePalette>,
     tape: TapeState,
-    elapsed: number,
-    invert: boolean
+    elapsed: number
   ) => {
-    // Tape Reels
-    const reelLeftX = 80;
-    const reelRightX = 240;
+    // 2 Large Rotating Tape Reels
+    const reelLeftX = 85;
+    const reelRightX = 235;
     const reelY = 85;
-    const reelR = 34;
+    const reelR = 38;
 
-    const rotation = tape.isPlaying 
-      ? (tape.speed * elapsed * 4) 
-      : 0;
+    const rotation = tape.isPlaying ? (elapsed * 2 * tape.speed) : 0;
 
     [reelLeftX, reelRightX].forEach((rx, idx) => {
-      // Outer Reel
-      ctx.strokeStyle = invert ? theme.secondary : theme.sub;
-      ctx.lineWidth = 2.5;
+      // Outer Rim
+      ctx.strokeStyle = OP1_COLORS.white;
+      ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.arc(rx, reelY, reelR, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Reel Spokes
-      ctx.strokeStyle = theme.primary;
+      // Brown Tape Fill
+      ctx.fillStyle = '#6e3c1b';
+      ctx.beginPath();
+      ctx.arc(rx, reelY, reelR - 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3 Center Spokes
+      ctx.strokeStyle = OP1_COLORS.white;
       ctx.lineWidth = 2;
       for (let s = 0; s < 3; s++) {
-        const sa = (s / 3) * Math.PI * 2 + (idx === 0 ? rotation : -rotation);
+        const spokeAngle = rotation + (s * (Math.PI * 2 / 3));
         ctx.beginPath();
         ctx.moveTo(rx, reelY);
-        ctx.lineTo(rx + Math.cos(sa) * reelR, reelY + Math.sin(sa) * reelR);
+        ctx.lineTo(rx + Math.cos(spokeAngle) * (reelR - 4), reelY + Math.sin(spokeAngle) * (reelR - 4));
         ctx.stroke();
       }
 
       // Center Hub
-      ctx.fillStyle = invert ? theme.primary : theme.secondary;
+      ctx.fillStyle = OP1_COLORS.orange;
       ctx.beginPath();
-      ctx.arc(rx, reelY, 8, 0, Math.PI * 2);
+      ctx.arc(rx, reelY, 9, 0, Math.PI * 2);
       ctx.fill();
     });
 
-    // Connecting Magnetic Tape Ribbon
-    ctx.strokeStyle = theme.sub;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(reelLeftX, reelY + reelR);
-    ctx.lineTo(160, 130);
-    ctx.lineTo(reelRightX, reelY + reelR);
-    ctx.stroke();
+    // 4 Tracks Waveform Visualizer
+    const trackY = 135;
+    const trackH = 14;
 
-    // 4 Tracks Waveform Area
-    const trackH = 12;
-    const trackStartY = 142;
+    for (let t = 0; t < 4; t++) {
+      const ty = trackY + t * (trackH + 3);
+      const isSel = tape.selectedTrack === t + 1;
 
-    tape.tracks.forEach((track, idx) => {
-      const ty = trackStartY + idx * (trackH + 3);
-      const isSelected = tape.selectedTrack === idx + 1;
+      ctx.fillStyle = isSel ? 'rgba(255, 85, 0, 0.2)' : 'rgba(255, 255, 255, 0.05)';
+      ctx.fillRect(15, ty, 290, trackH);
 
-      // Track background ribbon
-      ctx.fillStyle = isSelected ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)';
-      ctx.fillRect(20, ty, 280, trackH);
+      // Track Number Label
+      ctx.fillStyle = isSel ? OP1_COLORS.orange : OP1_COLORS.gray;
+      ctx.font = 'bold 9px monospace';
+      ctx.fillText(`T${t + 1}`, 20, ty + 10);
 
-      // Track Label
-      ctx.fillStyle = isSelected ? theme.primary : theme.sub;
-      ctx.font = 'bold 8px "Space Mono", monospace';
-      ctx.fillText(`T${idx + 1}`, 7, ty + 9);
-
-      // Waveform simulation
-      ctx.strokeStyle = isSelected ? theme.accent : theme.sub;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      for (let x = 20; x < 300; x += 6) {
-        const h = (Math.sin(x * 0.1 + idx) * 0.5 + 0.5) * (trackH - 4);
-        ctx.moveTo(x, ty + trackH / 2 - h / 2);
-        ctx.lineTo(x, ty + trackH / 2 + h / 2);
+      // Simulated Waveform Bars
+      ctx.fillStyle = isSel ? OP1_COLORS.orange : OP1_COLORS.blue;
+      for (let x = 40; x < 290; x += 4) {
+        const h = Math.sin((x + t * 20) * 0.1) * 4 + 5;
+        ctx.fillRect(x, ty + (trackH - h) / 2, 2, h);
       }
-      ctx.stroke();
-    });
+    }
 
-    // Playhead Scrubber Line
-    const playheadX = 20 + (tape.playheadPosition / tape.tapeLength) * 280;
-    ctx.strokeStyle = theme.secondary;
+    // Playhead Line
+    const playX = 40 + ((tape.playheadPosition % 30) / 30) * 250;
+    ctx.strokeStyle = OP1_COLORS.white;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(playheadX, trackStartY - 4);
-    ctx.lineTo(playheadX, trackStartY + 4 * (trackH + 3));
+    ctx.moveTo(playX, 130);
+    ctx.lineTo(playX, 195);
     ctx.stroke();
-
-    // Playhead triangle flag
-    ctx.fillStyle = theme.secondary;
-    ctx.beginPath();
-    ctx.moveTo(playheadX - 4, trackStartY - 8);
-    ctx.lineTo(playheadX + 4, trackStartY - 8);
-    ctx.lineTo(playheadX, trackStartY - 3);
-    ctx.closePath();
-    ctx.fill();
-
-    // Status readout
-    ctx.fillStyle = theme.text;
-    ctx.font = '8px "Space Mono", monospace';
-    ctx.fillText(`PLAYHEAD: ${tape.playheadPosition.toFixed(1)}s / ${tape.tapeLength}s`, 15, 215);
-    ctx.fillText(`SPEED: ${tape.speed}x ${tape.isRecording ? '[REC ●]' : ''}`, 190, 215);
   };
 
-  const renderDrumScreen = (
-    ctx: CanvasRenderingContext2D,
-    theme: ReturnType<typeof getThemePalette>,
-    hit: string | undefined,
-    elapsed: number
-  ) => {
-    ctx.fillStyle = theme.text;
-    ctx.font = 'bold 10px "Space Mono", monospace';
-    ctx.fillText('DRUM SAMPLER // 8 PADS', 95, 45);
-
-    // 8 Slice Matrix
-    const padW = 60;
-    const padH = 45;
-    const padNames = ['KICK', 'SNARE', 'HAT-C', 'HAT-O', 'CLAP', 'COWBELL', 'LASER', 'TOM'];
-
-    padNames.forEach((name, idx) => {
-      const col = idx % 4;
-      const row = Math.floor(idx / 4);
-      const px = 25 + col * (padW + 10);
-      const py = 65 + row * (padH + 10);
-      const isHit = hit === name || (hit === 'KICK' && idx === 0);
-
-      ctx.fillStyle = isHit ? theme.secondary : 'rgba(255, 255, 255, 0.08)';
-      ctx.fillRect(px, py, padW, padH);
-
-      ctx.strokeStyle = isHit ? theme.primary : theme.grid;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(px, py, padW, padH);
-
-      ctx.fillStyle = isHit ? theme.bg : theme.text;
-      ctx.font = 'bold 8px "Space Mono", monospace';
-      ctx.fillText(name, px + 8, py + 26);
-    });
-
-    // Sample Waveform Bar at bottom
-    ctx.strokeStyle = theme.accent;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    for (let x = 20; x <= 300; x += 4) {
-      const h = Math.abs(Math.sin(x * 0.08 + elapsed * 2)) * 18;
-      ctx.moveTo(x, 190 - h / 2);
-      ctx.lineTo(x, 190 + h / 2);
-    }
-    ctx.stroke();
-
-    ctx.fillStyle = theme.text;
-    ctx.font = '8px "Space Mono", monospace';
-    ctx.fillText('DYNAMIC MULTI-SAMPLE ENGINE', 75, 215);
-  };
-
+  // --- MIXER SCREEN (4 FADERS & VU METERS) ---
   const renderMixerScreen = (
     ctx: CanvasRenderingContext2D,
-    theme: ReturnType<typeof getThemePalette>,
-    tape: TapeState,
+    tape: TapeState
+  ) => {
+    ctx.fillStyle = OP1_COLORS.white;
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('4-TRACK MIXER & GAIN', 160, 42);
+
+    const faderW = 45;
+    const startX = 35;
+
+    for (let i = 0; i < 4; i++) {
+      const fx = startX + i * 65;
+      const vol = tape.tracks[i].volume;
+      const colors = [OP1_COLORS.blue, OP1_COLORS.green, OP1_COLORS.white, OP1_COLORS.orange];
+
+      // Fader Track Background
+      ctx.fillStyle = OP1_COLORS.darkGray;
+      ctx.fillRect(fx + 18, 60, 8, 120);
+
+      // Active Level Fill
+      const fillH = (vol / 100) * 120;
+      ctx.fillStyle = colors[i];
+      ctx.fillRect(fx + 18, 60 + 120 - fillH, 8, fillH);
+
+      // Fader Knob Cap
+      ctx.fillStyle = OP1_COLORS.white;
+      ctx.fillRect(fx + 12, 60 + 120 - fillH - 4, 20, 8);
+
+      // Label & Vol %
+      ctx.fillStyle = OP1_COLORS.gray;
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`CH ${i + 1}`, fx + 22, 195);
+    }
+  };
+
+  // --- DRUM SAMPLER SCREEN ---
+  const renderDrumScreen = (
+    ctx: CanvasRenderingContext2D,
+    lastHit: string | undefined,
     elapsed: number
   ) => {
-    ctx.fillStyle = theme.text;
-    ctx.font = 'bold 10px "Space Mono", monospace';
-    ctx.fillText('4-CHANNEL MASTER MIXER', 95, 45);
+    ctx.fillStyle = OP1_COLORS.white;
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('DRUM SAMPLER // 24 SLICES', 160, 48);
 
-    // 4 channel faders
-    const colW = 55;
-    tape.tracks.forEach((t, idx) => {
-      const cx = 35 + idx * (colW + 15);
-      const faderH = 90;
-      const faderY = 70;
+    // 24 Slice Grid
+    const startX = 30;
+    const startY = 70;
+    const cellW = 30;
+    const cellH = 24;
 
-      // Track fader track
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-      ctx.fillRect(cx + 20, faderY, 6, faderH);
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 8; c++) {
+        const idx = r * 8 + c;
+        const x = startX + c * (cellW + 3);
+        const y = startY + r * (cellH + 4);
 
-      // Fader cap position
-      const capY = faderY + faderH - (t.volume / 100) * faderH;
-      ctx.fillStyle = theme.primary;
-      ctx.fillRect(cx + 10, capY - 4, 26, 8);
+        const isHit = lastHit === `PAD ${idx + 1}`;
+        ctx.fillStyle = isHit ? OP1_COLORS.orange : OP1_COLORS.darkGray;
+        ctx.fillRect(x, y, cellW, cellH);
 
-      // Track Label & Volume
-      ctx.fillStyle = theme.text;
-      ctx.font = '8px "Space Mono", monospace';
-      ctx.fillText(`CH ${idx + 1}`, cx + 14, faderY + faderH + 15);
-      ctx.fillText(`${t.volume}%`, cx + 14, faderY + faderH + 26);
+        ctx.strokeStyle = isHit ? OP1_COLORS.white : OP1_COLORS.gray;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, cellW, cellH);
+
+        ctx.fillStyle = isHit ? OP1_COLORS.white : OP1_COLORS.gray;
+        ctx.font = 'bold 8px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${idx + 1}`, x + cellW / 2, y + 15);
+      }
+    }
+  };
+
+  // --- OFFICIAL BOOT SCREEN ---
+  const renderBootScreen = (
+    ctx: CanvasRenderingContext2D,
+    mod: FirmwareModState,
+    progress: number,
+    message: string
+  ) => {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, 320, 240);
+
+    const cx = 160;
+    const cy = 70;
+
+    // Outer Circle
+    ctx.strokeStyle = OP1_COLORS.blue;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 28, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Inner Tape Symbol
+    ctx.fillStyle = OP1_COLORS.orange;
+    ctx.beginPath();
+    ctx.arc(cx - 10, cy, 7, 0, Math.PI * 2);
+    ctx.arc(cx + 10, cy, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Boot Title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('TEENAGE ENGINEERING OP-1', cx, 120);
+
+    ctx.fillStyle = OP1_COLORS.green;
+    ctx.font = 'bold 10px monospace';
+    ctx.fillText(`FIRMWARE v${mod.baseVersion}`, cx, 138);
+
+    // Progress Bar
+    const barX = 35;
+    const barY = 165;
+    const barW = 250;
+    const barH = 10;
+
+    ctx.strokeStyle = OP1_COLORS.blue;
+    ctx.strokeRect(barX, barY, barW, barH);
+
+    const fillW = Math.max(4, Math.min(barW, (progress / 100) * barW));
+    ctx.fillStyle = OP1_COLORS.blue;
+    ctx.fillRect(barX, barY, fillW, barH);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${message} (${Math.round(progress)}%)`, barX, 195);
+  };
+
+  // --- TE-BOOT SCREEN ---
+  const renderTeBootScreen = (
+    ctx: CanvasRenderingContext2D,
+    mod: FirmwareModState
+  ) => {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, 320, 240);
+
+    ctx.fillStyle = OP1_COLORS.orange;
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('[ TE-BOOT v1.02.4 / BOOTLOADER ]', 20, 30);
+
+    ctx.strokeStyle = OP1_COLORS.orange;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(20, 38);
+    ctx.lineTo(300, 38);
+    ctx.stroke();
+
+    const options = [
+      '1. FLASH FIRMWARE (op1_243.op1)',
+      '2. VERIFY ANTI-BRICK CHECKSUM CRC32',
+      '3. FORMAT INTERNAL FLASH MEMORY',
+      '4. RUN ADSP-BF533 DIAGNOSTICS',
+      '5. BOOT OP-1 RUNTIME'
+    ];
+
+    ctx.fillStyle = OP1_COLORS.white;
+    ctx.font = '9px monospace';
+    options.forEach((opt, i) => {
+      ctx.fillText(opt, 25, 65 + i * 22);
     });
 
-    ctx.fillStyle = theme.text;
-    ctx.font = '8px "Space Mono", monospace';
-    ctx.fillText('MASTER COMPRESSOR: ACTIVE', 15, 215);
-    ctx.fillText('DRIVE: +3.5dB', 200, 215);
+    ctx.fillStyle = OP1_COLORS.green;
+    ctx.fillText('PRESS [1-5] OR USE ROTARY ENCODER', 25, 195);
   };
 
   return (
-    <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden border-2 border-neutral-800 oled-screen shadow-2xl">
-      <canvas
-        ref={canvasRef}
-        width={320}
-        height={240}
-        className="w-full h-full block"
-      />
-    </div>
+    <canvas
+      ref={canvasRef}
+      width={320}
+      height={240}
+      className="w-full h-full block rounded-lg shadow-inner bg-black"
+    />
   );
 };

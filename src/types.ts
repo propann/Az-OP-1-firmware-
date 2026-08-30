@@ -21,7 +21,7 @@ export type SynthEngineType =
   | 'spectralres'   // Custom DSP Engine 11: Comb-Filter Spectral Resonator
   | 'harmonic';     // Custom DSP Engine 12: Additive Harmonic Drawbar
 
-export type ScreenMode = 'synth' | 'drum' | 'tape' | 'mixer' | 'modder' | 'sequencer' | 'preset' | 'engineering';
+export type ScreenMode = 'synth' | 'drum' | 'tape' | 'mixer' | 'modder' | 'sequencer' | 'preset' | 'engineering' | 'teboot' | 'sysinfo';
 
 export type FxType = 'cwo' | 'delay' | 'nitro' | 'filter' | 'reverb' | 'chorus';
 
@@ -114,6 +114,8 @@ export interface FirmwareModState {
   unlockedHiddenPresets: boolean;
   flashCount: number;
   customDspEnginesUnlocked: boolean;
+  crc32?: string;
+  targetChecksum?: string;
 }
 
 export interface SynthPreset {
@@ -321,4 +323,71 @@ export interface FirmwareBinaryInspector {
   l1SramUsagePercent: number;
   sdramUsagePercent: number;
 }
+
+export interface MidiDeviceInfo {
+  id: string;
+  name: string;
+  manufacturer: string;
+  state: string;
+  connection: string;
+  isOP1Device: boolean;
+}
+
+export interface MidiMessageLog {
+  id: string;
+  timestamp: string;
+  type: 'noteOn' | 'noteOff' | 'cc' | 'pitchBend' | 'clock' | 'sysex';
+  channel: number;
+  data1: number;
+  data2: number;
+  formatted: string;
+}
+
+export interface MidiMappingConfig {
+  blueKnobCC: number;
+  greenKnobCC: number;
+  whiteKnobCC: number;
+  orangeKnobCC: number;
+  pitchBendEnabled: boolean;
+  synthModeCC: number;
+  drumModeCC: number;
+  tapeModeCC: number;
+  mixerModeCC: number;
+  playCC: number;
+  stopCC: number;
+  recordCC: number;
+}
+
+export interface WorkspaceAuditReport {
+  totalFiles: number;
+  totalSizeBytes: number;
+  linesOfCode: number;
+  dspCyclesPeak: number;
+  memorySafetyStatus: 'SAFE' | 'WARNING' | 'OVERFLOW';
+  crc32Computed: string;
+  antiBrickCheckPassed: boolean;
+  checklist: {
+    title: string;
+    passed: boolean;
+    details: string;
+  }[];
+}
+
+export interface WorkspaceProject {
+  id: string;
+  name: string;
+  path: string;
+  description: string;
+  sourceFirmwareId: string;
+  createdAt: string;
+  updatedAt: string;
+  sizeMb: number;
+  status: 'EMPTY' | 'UNPACKED' | 'MODDED' | 'BUILT';
+  filesCount: number;
+  patchesCount: number;
+  dspEnginesCount: number;
+  tree: FirmwareFileNode[];
+  auditReport?: WorkspaceAuditReport;
+}
+
 

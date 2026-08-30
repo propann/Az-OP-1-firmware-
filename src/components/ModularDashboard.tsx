@@ -223,6 +223,7 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
             setModState={setModState}
             onOpenWorkshop={() => handleTabChange('mod-workshop')}
             onOpenPipeline={() => handleTabChange('production-pipeline')}
+            onOpenEmulator={onSwitchToHardwareView}
           />
         )}
 

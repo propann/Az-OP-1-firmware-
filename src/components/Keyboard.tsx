@@ -6,17 +6,15 @@ interface KeyboardProps {
   activeNotes: number[];
   octave: number;
   onOctaveChange: (oct: number) => void;
-  onPitchBend: (semitones: number) => void;
+  onPitchBend?: (semitones: number) => void;
 }
 
-interface WhiteKeyDef {
-  name: string;
-  semitone: number; // offset from F
-  key: string;
-  hasSharp?: boolean;
-  sharpName?: string;
-  sharpSemitone?: number;
-  sharpKey?: string;
+interface OP1KeyDef {
+  midiNoteOffset: number; // 0 to 23 (2 octaves, F3 to E5)
+  noteName: string;
+  isBlackKey: boolean;
+  pcKey: string;
+  gridCol: number; // 1 to 14
 }
 
 export const Keyboard: React.FC<KeyboardProps> = ({
@@ -24,41 +22,51 @@ export const Keyboard: React.FC<KeyboardProps> = ({
   onNoteOff,
   activeNotes,
   octave,
-  onOctaveChange,
-  onPitchBend
+  onOctaveChange
 }) => {
   const [isMouseDown, setIsMouseDown] = useState(false);
   const pressedKeysRef = useRef<Set<string>>(new Set());
 
-  // 14 White keys spanning F3 to E5
-  const whiteKeyDefs: WhiteKeyDef[] = [
-    // Octave 1
-    { name: 'F', semitone: 0, key: 'a', hasSharp: true, sharpName: 'F#', sharpSemitone: 1, sharpKey: 'w' },
-    { name: 'G', semitone: 2, key: 's', hasSharp: true, sharpName: 'G#', sharpSemitone: 3, sharpKey: 'e' },
-    { name: 'A', semitone: 4, key: 'd', hasSharp: true, sharpName: 'A#', sharpSemitone: 5, sharpKey: 'r' },
-    { name: 'B', semitone: 6, key: 'f', hasSharp: false },
-    { name: 'C', semitone: 7, key: 'g', hasSharp: true, sharpName: 'C#', sharpSemitone: 8, sharpKey: 'y' },
-    { name: 'D', semitone: 9, key: 'h', hasSharp: true, sharpName: 'D#', sharpSemitone: 10, sharpKey: 'u' },
-    { name: 'E', semitone: 11, key: 'j', hasSharp: false },
-    // Octave 2
-    { name: 'F', semitone: 12, key: 'k', hasSharp: true, sharpName: 'F#', sharpSemitone: 13, sharpKey: 'o' },
-    { name: 'G', semitone: 14, key: 'l', hasSharp: true, sharpName: 'G#', sharpSemitone: 15, sharpKey: 'p' },
-    { name: 'A', semitone: 16, key: ';', hasSharp: true, sharpName: 'A#', sharpSemitone: 17, sharpKey: '[' },
-    { name: 'B', semitone: 18, key: "'", hasSharp: false },
-    { name: 'C', semitone: 19, key: 'z', hasSharp: true, sharpName: 'C#', sharpSemitone: 20, sharpKey: 'x' },
-    { name: 'D', semitone: 21, key: 'c', hasSharp: true, sharpName: 'D#', sharpSemitone: 22, sharpKey: 'v' },
-    { name: 'E', semitone: 23, key: 'b', hasSharp: false },
-  ];
-
+  // OP-1 Keybed has 24 keys: 14 circular white keys and 10 raised circular/pill black keys
+  // Range: F to E across 2 octaves (24 notes)
+  // Root note F3 is MIDI 53 when octave=3, F4 is 65 when octave=4
   const rootMidi = 53 + (octave - 3) * 12;
 
-  // Build keyboard map for quick keydown lookup
+  // Exact 24 physical circular keys layout mapping
+  const keys: OP1KeyDef[] = [
+    // Octave 1 (F to E)
+    { midiNoteOffset: 0, noteName: 'F', isBlackKey: false, pcKey: 'a', gridCol: 1 },
+    { midiNoteOffset: 1, noteName: 'F#', isBlackKey: true, pcKey: 'w', gridCol: 1 },
+    { midiNoteOffset: 2, noteName: 'G', isBlackKey: false, pcKey: 's', gridCol: 2 },
+    { midiNoteOffset: 3, noteName: 'G#', isBlackKey: true, pcKey: 'e', gridCol: 2 },
+    { midiNoteOffset: 4, noteName: 'A', isBlackKey: false, pcKey: 'd', gridCol: 3 },
+    { midiNoteOffset: 5, noteName: 'A#', isBlackKey: true, pcKey: 'r', gridCol: 3 },
+    { midiNoteOffset: 6, noteName: 'B', isBlackKey: false, pcKey: 'f', gridCol: 4 },
+    { midiNoteOffset: 7, noteName: 'C', isBlackKey: false, pcKey: 'g', gridCol: 5 },
+    { midiNoteOffset: 8, noteName: 'C#', isBlackKey: true, pcKey: 'y', gridCol: 5 },
+    { midiNoteOffset: 9, noteName: 'D', isBlackKey: false, pcKey: 'h', gridCol: 6 },
+    { midiNoteOffset: 10, noteName: 'D#', isBlackKey: true, pcKey: 'u', gridCol: 6 },
+    { midiNoteOffset: 11, noteName: 'E', isBlackKey: false, pcKey: 'j', gridCol: 7 },
+
+    // Octave 2 (F to E)
+    { midiNoteOffset: 12, noteName: 'F', isBlackKey: false, pcKey: 'k', gridCol: 8 },
+    { midiNoteOffset: 13, noteName: 'F#', isBlackKey: true, pcKey: 'o', gridCol: 8 },
+    { midiNoteOffset: 14, noteName: 'G', isBlackKey: false, pcKey: 'l', gridCol: 9 },
+    { midiNoteOffset: 15, noteName: 'G#', isBlackKey: true, pcKey: 'p', gridCol: 9 },
+    { midiNoteOffset: 16, noteName: 'A', isBlackKey: false, pcKey: ';', gridCol: 10 },
+    { midiNoteOffset: 17, noteName: 'A#', isBlackKey: true, pcKey: '[', gridCol: 10 },
+    { midiNoteOffset: 18, noteName: 'B', isBlackKey: false, pcKey: "'", gridCol: 11 },
+    { midiNoteOffset: 19, noteName: 'C', isBlackKey: false, pcKey: 'z', gridCol: 12 },
+    { midiNoteOffset: 20, noteName: 'C#', isBlackKey: true, pcKey: 'x', gridCol: 12 },
+    { midiNoteOffset: 21, noteName: 'D', isBlackKey: false, pcKey: 'c', gridCol: 13 },
+    { midiNoteOffset: 22, noteName: 'D#', isBlackKey: true, pcKey: 'v', gridCol: 13 },
+    { midiNoteOffset: 23, noteName: 'E', isBlackKey: false, pcKey: 'b', gridCol: 14 }
+  ];
+
+  // Map PC keyboard keys to MIDI notes
   const keyToMidiMap: { [key: string]: number } = {};
-  whiteKeyDefs.forEach((w) => {
-    keyToMidiMap[w.key.toLowerCase()] = rootMidi + w.semitone;
-    if (w.hasSharp && w.sharpKey && w.sharpSemitone !== undefined) {
-      keyToMidiMap[w.sharpKey.toLowerCase()] = rootMidi + w.sharpSemitone;
-    }
+  keys.forEach(k => {
+    keyToMidiMap[k.pcKey.toLowerCase()] = rootMidi + k.midiNoteOffset;
   });
 
   useEffect(() => {
@@ -94,143 +102,130 @@ export const Keyboard: React.FC<KeyboardProps> = ({
     };
   }, [keyToMidiMap, octave, onNoteOn, onNoteOff, onOctaveChange]);
 
-  const handleMouseDownOnKey = (midi: number) => {
-    setIsMouseDown(true);
+  const handleKeyTrigger = (midi: number) => {
     onNoteOn(midi);
   };
 
-  const handleMouseUpOnKey = (midi: number) => {
+  const handleKeyRelease = (midi: number) => {
     onNoteOff(midi);
   };
 
-  const handleMouseEnterKey = (midi: number) => {
-    if (isMouseDown) {
-      onNoteOn(midi);
-    }
-  };
-
-  const handleMouseLeaveKey = (midi: number) => {
-    if (isMouseDown) {
-      onNoteOff(midi);
-    }
-  };
+  const whiteKeys = keys.filter(k => !k.isBlackKey);
+  const blackKeys = keys.filter(k => k.isBlackKey);
 
   return (
     <div 
-      className="flex flex-col gap-2 select-none w-full max-w-4xl mx-auto"
+      className="flex flex-col items-center select-none w-full max-w-5xl mx-auto"
       onMouseUp={() => setIsMouseDown(false)}
       onMouseLeave={() => setIsMouseDown(false)}
     >
-      {/* Octave & Pitch Bend Controls */}
-      <div className="flex items-center justify-between px-3 py-1 bg-neutral-800/60 rounded-md border border-neutral-700/50 text-xs font-mono">
-        <div className="flex items-center gap-2">
-          <span className="text-neutral-400 font-bold uppercase tracking-wider text-[10px]">OCTAVE:</span>
-          <button
-            id="octave-down"
-            onClick={() => onOctaveChange(Math.max(1, octave - 1))}
-            className="w-7 h-6 flex items-center justify-center rounded bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-500 text-neutral-200 border border-neutral-600 font-bold"
-          >
-            -
-          </button>
-          <span className="text-orange-400 font-bold px-1">{octave}</span>
-          <button
-            id="octave-up"
-            onClick={() => onOctaveChange(Math.min(5, octave + 1))}
-            className="w-7 h-6 flex items-center justify-center rounded bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-500 text-neutral-200 border border-neutral-600 font-bold"
-          >
-            +
-          </button>
-          <span className="text-neutral-500 text-[10px] ml-2 hidden sm:inline">(Arrow keys / Keyboard keys: A-W-S-E-D-F...)</span>
-        </div>
+      {/* Authentic OP-1 24 Circular Keys Bed Container */}
+      <div className="relative w-full px-2 py-4 rounded-3xl bg-[#d5d9e2] border-2 border-[#b8bfcf] shadow-[inset_0_2px_6px_rgba(0,0,0,0.15)] flex flex-col justify-center">
+        
+        {/* Top Row: 10 Raised Black Keys */}
+        <div className="relative h-12 w-full flex justify-center items-center mb-1">
+          <div className="w-full max-w-4xl flex justify-between relative px-6">
+            {whiteKeys.map((wk, colIdx) => {
+              const matchingBlack = blackKeys.find(bk => bk.gridCol === wk.gridCol);
+              if (!matchingBlack) {
+                // Gap where B/E natural notes have no sharps
+                return <div key={`spacer-${colIdx}`} className="w-9 sm:w-11 md:w-13 h-10 pointer-events-none opacity-0" />;
+              }
 
-        <div className="flex items-center gap-1.5">
-          <button
-            id="pitch-down"
-            onMouseDown={() => onPitchBend(-2)}
-            onMouseUp={() => onPitchBend(0)}
-            onTouchStart={(e) => { e.preventDefault(); onPitchBend(-2); }}
-            onTouchEnd={(e) => { e.preventDefault(); onPitchBend(0); }}
-            className="px-2 py-1 rounded bg-neutral-700 active:bg-blue-600 text-neutral-300 border border-neutral-600 font-bold text-[10px]"
-          >
-            BEND -
-          </button>
-          <button
-            id="pitch-up"
-            onMouseDown={() => onPitchBend(2)}
-            onMouseUp={() => onPitchBend(0)}
-            onTouchStart={(e) => { e.preventDefault(); onPitchBend(2); }}
-            onTouchEnd={(e) => { e.preventDefault(); onPitchBend(0); }}
-            className="px-2 py-1 rounded bg-neutral-700 active:bg-blue-600 text-neutral-300 border border-neutral-600 font-bold text-[10px]"
-          >
-            BEND +
-          </button>
-        </div>
-      </div>
+              const midiNote = rootMidi + matchingBlack.midiNoteOffset;
+              const isActive = activeNotes.includes(midiNote);
 
-      {/* 24-Key Piano Ribbon with Accurate Black Keys Overlay */}
-      <div className="relative flex justify-center w-full overflow-x-auto py-1 px-1">
-        <div className="relative flex">
-          {whiteKeyDefs.map((w, idx) => {
-            const whiteMidi = rootMidi + w.semitone;
-            const isWhiteActive = activeNotes.includes(whiteMidi);
-
-            const sharpMidi = w.hasSharp && w.sharpSemitone !== undefined ? rootMidi + w.sharpSemitone : null;
-            const isSharpActive = sharpMidi !== null && activeNotes.includes(sharpMidi);
-
-            return (
-              <div key={idx} className="relative flex">
-                {/* White Key */}
-                <div
-                  id={`white-key-${whiteMidi}`}
-                  onMouseDown={() => handleMouseDownOnKey(whiteMidi)}
-                  onMouseUp={() => handleMouseUpOnKey(whiteMidi)}
-                  onMouseEnter={() => handleMouseEnterKey(whiteMidi)}
-                  onMouseLeave={() => handleMouseLeaveKey(whiteMidi)}
-                  onTouchStart={(e) => { e.preventDefault(); onNoteOn(whiteMidi); }}
-                  onTouchEnd={(e) => { e.preventDefault(); onNoteOff(whiteMidi); }}
-                  className={`w-7 sm:w-8 md:w-9 lg:w-10 h-28 sm:h-32 rounded-b-md cursor-pointer flex flex-col justify-between items-center pb-2 pt-1 border-r border-neutral-300 op1-white-key select-none ${
-                    idx === 0 ? 'rounded-tl-sm' : ''
-                  } ${idx === whiteKeyDefs.length - 1 ? 'rounded-tr-sm' : ''} ${
-                    isWhiteActive ? 'is-active !bg-blue-300' : ''
-                  }`}
-                >
-                  <span className="text-[9px] font-mono text-neutral-400 font-bold">
-                    {w.key.toUpperCase()}
-                  </span>
-                  <span className="text-[10px] font-mono text-neutral-700 font-bold">
-                    {w.name}
-                  </span>
-                </div>
-
-                {/* Overlaid Sharp/Flat Black Key */}
-                {w.hasSharp && sharpMidi !== null && w.sharpKey && (
-                  <div
-                    id={`black-key-${sharpMidi}`}
-                    onMouseDown={(e) => { e.stopPropagation(); handleMouseDownOnKey(sharpMidi); }}
-                    onMouseUp={(e) => { e.stopPropagation(); handleMouseUpOnKey(sharpMidi); }}
-                    onMouseEnter={(e) => { e.stopPropagation(); handleMouseEnterKey(sharpMidi); }}
-                    onMouseLeave={(e) => { e.stopPropagation(); handleMouseLeaveKey(sharpMidi); }}
-                    onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); onNoteOn(sharpMidi); }}
-                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); onNoteOff(sharpMidi); }}
-                    className={`absolute z-20 w-4 sm:w-5 md:w-6 h-18 sm:h-20 rounded-b-md cursor-pointer flex flex-col justify-between items-center pb-1 pt-1 border border-neutral-700 op1-black-key ${
-                      isSharpActive ? 'is-active !bg-orange-500' : ''
-                    }`}
-                    style={{
-                      right: 'calc(-1 * (var(--black-key-width, 1.25rem) / 2))',
-                      zIndex: 20
+              return (
+                <div key={`black-${matchingBlack.midiNoteOffset}`} className="relative flex justify-center w-9 sm:w-11 md:w-13">
+                  <button
+                    id={`key-black-${midiNote}`}
+                    onMouseDown={() => {
+                      setIsMouseDown(true);
+                      handleKeyTrigger(midiNote);
                     }}
+                    onMouseUp={() => handleKeyRelease(midiNote)}
+                    onMouseEnter={() => {
+                      if (isMouseDown) handleKeyTrigger(midiNote);
+                    }}
+                    onMouseLeave={() => {
+                      if (isMouseDown) handleKeyRelease(midiNote);
+                    }}
+                    onTouchStart={(e) => {
+                      e.preventDefault();
+                      handleKeyTrigger(midiNote);
+                    }}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      handleKeyRelease(midiNote);
+                    }}
+                    className={`w-8 sm:w-10 md:w-11 h-10 sm:h-11 rounded-full flex flex-col items-center justify-center transition-all duration-75 border cursor-pointer active:scale-95 z-20 ${
+                      isActive
+                        ? 'bg-[#ea580c] text-white border-[#c2410c] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5),0_0_12px_#ea580c] translate-y-0.5'
+                        : 'bg-[#2b303c] text-[#d8dee9] hover:bg-[#3b4252] border-[#181a20] shadow-[0_4px_0_#14171d,0_5px_8px_rgba(0,0,0,0.35)]'
+                    }`}
+                    title={`${matchingBlack.noteName} (Touche ${matchingBlack.pcKey.toUpperCase()})`}
                   >
-                    <span className="text-[8px] font-mono text-neutral-400 font-bold">
-                      {w.sharpKey.toUpperCase()}
+                    <span className="text-[9px] sm:text-[10px] font-mono font-bold leading-tight pointer-events-none">
+                      {matchingBlack.noteName}
                     </span>
-                    <span className="text-[8px] font-mono text-neutral-200 font-bold">
-                      {w.sharpName}
+                    <span className="text-[7px] sm:text-[8px] font-mono text-neutral-400 opacity-60 leading-none pointer-events-none">
+                      [{matchingBlack.pcKey.toUpperCase()}]
                     </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Bottom Row: 14 White Circular Keys */}
+        <div className="relative w-full flex justify-center items-center">
+          <div className="w-full max-w-4xl flex justify-between relative px-2">
+            {whiteKeys.map((wk) => {
+              const midiNote = rootMidi + wk.midiNoteOffset;
+              const isActive = activeNotes.includes(midiNote);
+
+              return (
+                <div key={`white-${wk.midiNoteOffset}`} className="relative flex justify-center w-9 sm:w-11 md:w-13">
+                  <button
+                    id={`key-white-${midiNote}`}
+                    onMouseDown={() => {
+                      setIsMouseDown(true);
+                      handleKeyTrigger(midiNote);
+                    }}
+                    onMouseUp={() => handleKeyRelease(midiNote)}
+                    onMouseEnter={() => {
+                      if (isMouseDown) handleKeyTrigger(midiNote);
+                    }}
+                    onMouseLeave={() => {
+                      if (isMouseDown) handleKeyRelease(midiNote);
+                    }}
+                    onTouchStart={(e) => {
+                      e.preventDefault();
+                      handleKeyTrigger(midiNote);
+                    }}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      handleKeyRelease(midiNote);
+                    }}
+                    className={`w-9 sm:w-11 md:w-12 h-11 sm:h-13 rounded-full flex flex-col items-center justify-center transition-all duration-75 border cursor-pointer active:scale-95 z-10 ${
+                      isActive
+                        ? 'bg-[#0284c7] text-white border-[#0369a1] shadow-[inset_0_2px_4px_rgba(0,0,0,0.4),0_0_12px_#0284c7] translate-y-0.5'
+                        : 'bg-[#fcfdfe] text-[#1e293b] hover:bg-white border-[#cbd5e1] shadow-[0_4px_0_#94a3b8,0_5px_7px_rgba(0,0,0,0.18)]'
+                    }`}
+                    title={`${wk.noteName} (Touche ${wk.pcKey.toUpperCase()})`}
+                  >
+                    <span className="text-[10px] sm:text-[11px] font-mono font-bold leading-tight pointer-events-none">
+                      {wk.noteName}
+                    </span>
+                    <span className="text-[8px] font-mono text-neutral-400 opacity-60 leading-none pointer-events-none">
+                      [{wk.pcKey.toUpperCase()}]
+                    </span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
