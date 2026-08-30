@@ -30,6 +30,7 @@ import {
 } from '../types';
 import { DSP_ENGINES_CATALOG } from '../data/firmwareData';
 import { audioEngine } from '../audio/engine';
+import { KnobControl } from './KnobControl';
 
 interface CreationStudioPanelProps {
   currentEngine: SynthEngineType;
@@ -310,71 +311,32 @@ export const CreationStudioPanel: React.FC<CreationStudioPanelProps> = ({
               <span className="text-[10px] font-mono text-cyan-300 font-bold">{selectedEngineDef.id.toUpperCase()}</span>
             </div>
 
-            {/* 4 Encoders Sliders */}
-            <div className="space-y-2 font-mono text-xs">
-              {/* Blue */}
-              <div className="space-y-0.5">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-blue-400 truncate max-w-[140px]">{selectedEngineDef.knobBlueLabel}</span>
-                  <span className="text-blue-300 font-bold">{synthParams.blue}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={synthParams.blue}
-                  onChange={(e) => setSynthParams(prev => ({ ...prev, blue: parseInt(e.target.value) }))}
-                  className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                />
-              </div>
-
-              {/* Green */}
-              <div className="space-y-0.5">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-emerald-400 truncate max-w-[140px]">{selectedEngineDef.knobGreenLabel}</span>
-                  <span className="text-emerald-300 font-bold">{synthParams.green}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={synthParams.green}
-                  onChange={(e) => setSynthParams(prev => ({ ...prev, green: parseInt(e.target.value) }))}
-                  className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                />
-              </div>
-
-              {/* White */}
-              <div className="space-y-0.5">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-zinc-300 truncate max-w-[140px]">{selectedEngineDef.knobWhiteLabel}</span>
-                  <span className="text-white font-bold">{synthParams.white}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={synthParams.white}
-                  onChange={(e) => setSynthParams(prev => ({ ...prev, white: parseInt(e.target.value) }))}
-                  className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-zinc-300"
-                />
-              </div>
-
-              {/* Orange */}
-              <div className="space-y-0.5">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-amber-400 truncate max-w-[140px]">{selectedEngineDef.knobOrangeLabel}</span>
-                  <span className="text-amber-300 font-bold">{synthParams.orange}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={synthParams.orange}
-                  onChange={(e) => setSynthParams(prev => ({ ...prev, orange: parseInt(e.target.value) }))}
-                  className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
-                />
-              </div>
+            {/* 4 Physical OP-1 Continuous Encoders */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <KnobControl
+                color="blue"
+                label={selectedEngineDef.knobBlueLabel}
+                value={synthParams.blue}
+                onChange={(val) => setSynthParams(prev => ({ ...prev, blue: val }))}
+              />
+              <KnobControl
+                color="green"
+                label={selectedEngineDef.knobGreenLabel}
+                value={synthParams.green}
+                onChange={(val) => setSynthParams(prev => ({ ...prev, green: val }))}
+              />
+              <KnobControl
+                color="white"
+                label={selectedEngineDef.knobWhiteLabel}
+                value={synthParams.white}
+                onChange={(val) => setSynthParams(prev => ({ ...prev, white: val }))}
+              />
+              <KnobControl
+                color="orange"
+                label={selectedEngineDef.knobOrangeLabel}
+                value={synthParams.orange}
+                onChange={(val) => setSynthParams(prev => ({ ...prev, orange: val }))}
+              />
             </div>
           </div>
 

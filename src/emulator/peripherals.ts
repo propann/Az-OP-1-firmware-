@@ -156,15 +156,23 @@ export class HardwarePeripherals {
     this.cpu.triggerInterrupt(9);
   }
 
-  // Inject Rotary Encoder Rotation
-  public updateEncoder(color: 'blue' | 'green' | 'white' | 'orange', delta: number) {
-    if (color === 'blue') this.encoderBlue = Math.max(0, Math.min(100, this.encoderBlue + delta));
-    if (color === 'green') this.encoderGreen = Math.max(0, Math.min(100, this.encoderGreen + delta));
-    if (color === 'white') this.encoderWhite = Math.max(0, Math.min(100, this.encoderWhite + delta));
-    if (color === 'orange') this.encoderOrange = Math.max(0, Math.min(100, this.encoderOrange + delta));
+  // Inject Rotary Encoder Direct Value or Progressive Delta
+  public setEncoderValue(color: 'blue' | 'green' | 'white' | 'orange', value: number) {
+    const clamped = Math.max(0, Math.min(100, value));
+    if (color === 'blue') this.encoderBlue = clamped;
+    if (color === 'green') this.encoderGreen = clamped;
+    if (color === 'white') this.encoderWhite = clamped;
+    if (color === 'orange') this.encoderOrange = clamped;
 
-    // Trigger Encoder Interrupt
+    // Trigger Encoder Interrupt (IVG9) for Blackfin firmware processing
     this.cpu.triggerInterrupt(9);
+  }
+
+  public updateEncoder(color: 'blue' | 'green' | 'white' | 'orange', delta: number) {
+    if (color === 'blue') this.setEncoderValue('blue', this.encoderBlue + delta);
+    if (color === 'green') this.setEncoderValue('green', this.encoderGreen + delta);
+    if (color === 'white') this.setEncoderValue('white', this.encoderWhite + delta);
+    if (color === 'orange') this.setEncoderValue('orange', this.encoderOrange + delta);
   }
 
   // Render Framebuffer from SDRAM / PPI DMA buffer to Canvas ImageData

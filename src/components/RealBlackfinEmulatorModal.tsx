@@ -33,8 +33,10 @@ import {
   X, 
   Zap, 
   Maximize2,
-  HardDrive
+  HardDrive,
+  Sliders
 } from 'lucide-react';
+import { KnobControl } from './KnobControl';
 
 interface RealBlackfinEmulatorModalProps {
   isOpen: boolean;
@@ -69,6 +71,12 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
   const [memRows, setMemRows] = useState<{ address: number; bytes: number[]; ascii: string }[]>([]);
   const [selectedFirmwareVer, setSelectedFirmwareVer] = useState<string>('243');
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [encoderValues, setEncoderValues] = useState({
+    blue: 50,
+    green: 50,
+    white: 50,
+    orange: 50
+  });
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -425,6 +433,55 @@ export const RealBlackfinEmulatorModal: React.FC<RealBlackfinEmulatorModalProps>
                     </span>
                   </div>
                 )}
+              </div>
+
+              {/* 4 Physical Progressive Hardware Encoders (MMIO Injectors) */}
+              <div className="p-2.5 rounded-xl bg-[#12151c] border border-neutral-800 flex flex-col gap-2">
+                <div className="flex items-center justify-between text-[11px] font-bold text-neutral-400">
+                  <span className="flex items-center gap-1.5">
+                    <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>ENCODEURS OPTIQUES MATÉRIELS (INJECTION MMIO DIRECTE)</span>
+                  </span>
+                  <span className="text-[10px] text-cyan-400 font-mono">IVG9 Interrupt Matrix</span>
+                </div>
+                <div className="grid grid-cols-4 gap-2 pt-1">
+                  <KnobControl
+                    color="blue"
+                    label="Param 1"
+                    value={encoderValues.blue}
+                    onChange={(val) => {
+                      setEncoderValues(prev => ({ ...prev, blue: val }));
+                      op1Vm.peripherals.setEncoderValue('blue', val);
+                    }}
+                  />
+                  <KnobControl
+                    color="green"
+                    label="Param 2"
+                    value={encoderValues.green}
+                    onChange={(val) => {
+                      setEncoderValues(prev => ({ ...prev, green: val }));
+                      op1Vm.peripherals.setEncoderValue('green', val);
+                    }}
+                  />
+                  <KnobControl
+                    color="white"
+                    label="Param 3"
+                    value={encoderValues.white}
+                    onChange={(val) => {
+                      setEncoderValues(prev => ({ ...prev, white: val }));
+                      op1Vm.peripherals.setEncoderValue('white', val);
+                    }}
+                  />
+                  <KnobControl
+                    color="orange"
+                    label="Param 4"
+                    value={encoderValues.orange}
+                    onChange={(val) => {
+                      setEncoderValues(prev => ({ ...prev, orange: val }));
+                      op1Vm.peripherals.setEncoderValue('orange', val);
+                    }}
+                  />
+                </div>
               </div>
             </div>
 
